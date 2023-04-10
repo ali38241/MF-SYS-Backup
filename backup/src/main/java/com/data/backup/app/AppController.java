@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/mongo")
+@RequestMapping("/backup")
 public class AppController {
 	
 	private AppService appService;
@@ -22,23 +22,23 @@ public class AppController {
 	}
 	
 	
-	@GetMapping("/backup/{dbName}")
+	@GetMapping("/mongo/backup/{dbName}")
 	public void backUpMultiple(@PathVariable ArrayList<String> dbName)  {
 		appService.backup(dbName);
 	}
 	
-	@GetMapping("/restore/{dbName}")
+	@GetMapping("/mongo/restore/{dbName}")
 	public void restoreMulti(@PathVariable ArrayList<String> dbName) {
 		appService.restore(dbName);
 	}
 	
-	@GetMapping("/showAll")
+	@GetMapping("/mongo/showAll")
 	public String showAll() {
 		return appService.showAll();
 	}
 //---------------------MYSQL-----------------------------------
 	
-	@GetMapping("/getbackup/{dbname}")
+	@GetMapping("/sql/getbackup/{dbname}")
 	public ResponseEntity<String> backupDatabase(@PathVariable ArrayList<String> dbname) throws IOException,InterruptedException{
 		boolean success = appService.backupDatabase(dbname);
 		if(success) {
