@@ -59,7 +59,6 @@ public class AppService {
 		}
 	}
 	
-	
 	public String showAll() {
 		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port), "--eval", "db.getMongo().getDBNames().forEach(function(db){print(db)})" );
 		String result = "";
@@ -80,7 +79,27 @@ public class AppService {
 		
 	}
 
-
+//-------------------------------////eido////----------------------------------------//
+	
+	
+	private String dbusername = "root";
+	private String dbpassword = "root";
+	private String outputfile = "C:\\Users\\Windows\\Desktop\\db\\";
+	
+	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
+			
+			boolean i = false;
+			
+			for(String x: dbname) {
+				
+			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
+					dbusername, dbpassword, x, outputfile+x+".sql");
+			Process process = Runtime.getRuntime().exec(command);
+			process.waitFor();
+			i = process.exitValue()==0;
+	}
+			return i;
+	}
 
 }
 	
