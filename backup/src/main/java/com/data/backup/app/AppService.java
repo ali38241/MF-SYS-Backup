@@ -115,6 +115,36 @@ public class AppService {
 		}
 		return i;
 	}
+
+	
+	public String viewall() {
+	    ProcessBuilder pb = new ProcessBuilder(
+	        "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+	        "-u" + dbusername,
+	        "-p" + dbpassword,
+	        "-e",
+	        "show databases;"
+	    );
+	     String result = "";
+	    try {
+	        Process p = pb.start();
+	        result = new String(p.getInputStream().readAllBytes());
+	        int exitCode = p.waitFor();
+
+	        if (exitCode == 0) {
+	            System.out.println("Shown.");
+	        } else {
+	            System.err.println("Error showing");
+	        }
+	    } catch (IOException | InterruptedException e) {
+	        e.printStackTrace();
+	    }
+	    System.out.print(result);
+	    return result;
+	    
+	}
+
+
 }
 	
 	
