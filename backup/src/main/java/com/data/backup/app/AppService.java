@@ -5,8 +5,6 @@ package com.data.backup.app;
 import java.io.IOException;
 //import java.nio.file.Files;
 import java.util.ArrayList;
-//import java.util.zip.ZipEntry;
-//import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Service;
 
@@ -17,25 +15,25 @@ public class AppService {
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump";
 	
 	
+
 	//For multiple backups 
 	public void backup(ArrayList<String> dbName) {
+		for (String db : dbName) {
+			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host, "--port",
+					String.valueOf(port), "--out", backPath);
+			try {
+				Process p = pb.start();
+				int exitCode = p.waitFor();
+				if (exitCode == 0) {
+					System.out.println("Backup created successfully!");
 
-		dbName.stream()
-        .map(db -> new ProcessBuilder("mongodump", "--db", db, "--host", host, "--port", String.valueOf(port), "--out", backPath))
-        .forEach(pb -> {
-            try {
-                Process p = pb.start();
-                int exitCode = p.waitFor();
-
-                if (exitCode == 0) {
-                    System.out.println("Backup created successfully!");
-                } else {
-                    System.err.println("Error creating backup!");
-                }
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+				} else {
+					System.err.println("Error creating backup!");
+				}
+			} catch (IOException | InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 		
 	//For multiple restore
@@ -60,7 +58,8 @@ public class AppService {
 	}
 	
 	public String showAll() {
-		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port), "--eval", "db.getMongo().getDBNames().forEach(function(db){print(db)})" );
+		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port),
+				"--eval", "db.getMongo().getDBNames()");
 		String result = "";
 		try {
             Process p = pb.start();
@@ -68,9 +67,9 @@ public class AppService {
             int exitCode = p.waitFor();
             
             if (exitCode == 0) {
-                System.out.println("Shown.");
+				System.out.println("All databases:");
             } else {
-                System.err.println("Error showing");
+				System.err.println("Error in printing datbases.");
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -78,14 +77,13 @@ public class AppService {
 		return result;
 		
 	}
-
-//-------------------------------////sql////----------------------------------------//
 	
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\db\\";
 	
+	// -----------------------------SQL-------------------------//
 	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			
 			boolean i = false;
