@@ -3,6 +3,7 @@ package com.data.backup.app;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,5 +64,10 @@ public class AppController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
 		}
 	}
-
+	
+	@GetMapping("/sql/alldatabases")
+	public String showall() {
+		return appService.viewall();
+		
+	}
 }
