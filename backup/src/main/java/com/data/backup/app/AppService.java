@@ -17,7 +17,7 @@ public class AppService {
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump";
 	
 	
-	//For multiple backups 
+
 	public void backup(ArrayList<String> dbName) {
 
 		dbName.stream()
@@ -38,7 +38,6 @@ public class AppService {
         });
 	}
 		
-	//For multiple restore
 	public void restore(ArrayList<String> dbName) {
 		String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump\\";
 		for(String db: dbName) {
@@ -60,7 +59,8 @@ public class AppService {
 	}
 	
 	public String showAll() {
-		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port), "--eval", "db.getMongo().getDBNames().forEach(function(db){print(db)})" );
+		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port),
+				"--eval", "db.getMongo().getDBNames()");
 		String result = "";
 		try {
             Process p = pb.start();
