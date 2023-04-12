@@ -4,6 +4,7 @@ package com.data.backup.app;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,9 +67,9 @@ public class AppController {
 		}
 	}
 	
-	@GetMapping("/sql/alldatabases")
-	public String showall() {
-		return appService.viewall();
-		
-	}
+	 @GetMapping("/sql/alldatabases")
+	    public String showall() {
+	        Map<Integer, String> result = appService.viewall();
+	        return result.toString();
+	    }
 }

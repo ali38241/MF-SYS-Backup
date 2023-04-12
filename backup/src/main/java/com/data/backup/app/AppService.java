@@ -1,5 +1,6 @@
 package com.data.backup.app;
 
+import java.util.HashMap;
 //import java.io.File;
 //import java.io.FileOutputStream;
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 //import java.util.zip.ZipEntry;
 //import java.util.zip.ZipOutputStream;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -117,7 +119,9 @@ public class AppService {
 	}
 
 	
-	public String viewall() {
+
+	
+	public Map<Integer, String> viewall() {
 	    ProcessBuilder pb = new ProcessBuilder(
 	        "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
 	        "-u" + dbusername,
@@ -125,10 +129,18 @@ public class AppService {
 	        "-e",
 	        "show databases;"
 	    );
-	     String result = "";
+	    Map<Integer, String> result = new HashMap<>();
 	    try {
 	        Process p = pb.start();
-	        result = new String(p.getInputStream().readAllBytes());
+	        String output = new String(p.getInputStream().readAllBytes());
+	        String[] lines = output.split("\n");
+	        int i =1;
+	        for (String line : lines) {
+	            String[] parts = line.split("\t");
+	            if (parts.length > 0) {
+	                result.put(i++, parts[0]);
+	            }
+	        }
 	        int exitCode = p.waitFor();
 
 	        if (exitCode == 0) {
@@ -141,8 +153,8 @@ public class AppService {
 	    }
 	    System.out.print(result);
 	    return result;
-	    
 	}
+
 
 
 }
