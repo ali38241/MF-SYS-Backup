@@ -6,9 +6,11 @@ import java.io.IOException;
 //import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
-//import java.util.zip.ZipEntry;
 //import java.util.zip.ZipOutputStream;
 import java.util.Map;
+
+//import java.util.zip.ZipEntry;
+//import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Service;
 
@@ -75,11 +77,14 @@ public class AppService {
 //-------------------------------////MYSQL////----------------------------------------//
 	
 	
+	// -----------------------------SQL-------------------------//
+	
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\db\\";
 	
-	// -----------------------------SQL-------------------------//
+	
+//	------------------------------ backupdatabses-------------------------//
 	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			
 			boolean i = false;
@@ -96,6 +101,9 @@ public class AppService {
 	}
 
 	
+	
+//	-----------------------------------restire databases----------------------
+	
 	public boolean restoreDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean i = false;
 		for(String x: dbname) {
@@ -111,7 +119,10 @@ public class AppService {
 	}
 
 	
-	public String viewall() {
+
+//	------------------------------------- show all databases-----------------------------------
+	
+	public Map<Integer, String> viewall() {
 	    ProcessBuilder pb = new ProcessBuilder(
 	        "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
 	        "-u" + dbusername,
@@ -119,10 +130,18 @@ public class AppService {
 	        "-e",
 	        "show databases;"
 	    );
-	     String result = "";
+	    Map<Integer, String> result = new HashMap<>();
 	    try {
 	        Process p = pb.start();
-	        result = new String(p.getInputStream().readAllBytes());
+	        String output = new String(p.getInputStream().readAllBytes());
+	        String[] lines = output.split("\n");
+	        int i =1;
+	        for (String line : lines) {
+	            String[] parts = line.split("\t");
+	            if (parts.length > 0) {
+	                result.put(i++, parts[0]);
+	            }
+	        }
 	        int exitCode = p.waitFor();
 
 	        if (exitCode == 0) {
@@ -135,8 +154,8 @@ public class AppService {
 	    }
 	    System.out.print(result);
 	    return result;
-	    
 	}
+
 
 
 }

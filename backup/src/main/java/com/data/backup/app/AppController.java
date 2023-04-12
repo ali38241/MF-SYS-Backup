@@ -65,9 +65,9 @@ public class AppController {
 		}
 	}
 	
-	@GetMapping("/sql/alldatabases")
-	public String showall() {
-		return appService.viewall();
-		
-	}
+	 @GetMapping("/sql/alldatabases")
+		public Map<Integer, String> showall() {
+	        Map<Integer, String> result = appService.viewall();
+			return result;
+	    }
 }
