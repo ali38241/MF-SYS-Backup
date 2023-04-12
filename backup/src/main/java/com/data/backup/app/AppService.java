@@ -76,7 +76,7 @@ public class AppService {
 		
 	}
 
-//-------------------------------////eido////----------------------------------------//
+//-------------------------------////MYSQL////----------------------------------------//
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
