@@ -84,11 +84,14 @@ public class AppService {
 	}
 	
 	
+	// -----------------------------SQL-------------------------//
+	
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\db\\";
 	
-	// -----------------------------SQL-------------------------//
+	
+//	------------------------------ backupdatabses-------------------------//
 	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			
 			boolean i = false;
@@ -104,6 +107,9 @@ public class AppService {
 			return i;
 	}
 
+	
+	
+//	-----------------------------------restire databases----------------------
 	
 	public boolean restoreDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean i = false;
@@ -121,6 +127,7 @@ public class AppService {
 
 	
 
+//	------------------------------------- show all databases-----------------------------------
 	
 	public Map<Integer, String> viewall() {
 	    ProcessBuilder pb = new ProcessBuilder(
