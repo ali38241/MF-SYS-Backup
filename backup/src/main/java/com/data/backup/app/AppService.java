@@ -1,27 +1,28 @@
 package com.data.backup.app;
 
-import java.util.HashMap;
 //import java.io.File;
 //import java.io.FileOutputStream;
 import java.io.IOException;
 //import java.nio.file.Files;
 import java.util.ArrayList;
-//import java.util.zip.ZipEntry;
+import java.util.HashMap;
 //import java.util.zip.ZipOutputStream;
 import java.util.Map;
 
+//import java.util.zip.ZipEntry;
+//import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Service;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoIterable;
 
 @Service
 public class AppService {
 	String host = "localhost";
 	int port = 27017;
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump";
-	
-	
-
-	//For multiple backups 
 	public void backup(ArrayList<String> dbName) {
 		for (String db : dbName) {
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host, "--port",
@@ -41,7 +42,6 @@ public class AppService {
 		}
 	}
 		
-	//For multiple restore
 	public void restore(ArrayList<String> dbName) {
 		String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump\\";
 		for(String db: dbName) {
@@ -62,26 +62,19 @@ public class AppService {
 		}
 	}
 	
-	public String showAll() {
-		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port),
-				"--eval", "db.getMongo().getDBNames()");
-		String result = "";
-		try {
-            Process p = pb.start();
-            result = new String(p.getInputStream().readAllBytes());
-            int exitCode = p.waitFor();
-            
-            if (exitCode == 0) {
-				System.out.println("All databases:");
-            } else {
-				System.err.println("Error in printing datbases.");
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-		return result;
+	public Map<Integer, String> showAll() {
+		MongoClient mongo = MongoClients.create();
+		MongoIterable<String> list = mongo.listDatabaseNames();
+		Map<Integer, String> map = new HashMap<>();
+		int i = 1;
+		for (String name : list) {
+			map.put(i++, name);
+		}
+		return map;
 		
 	}
+
+//-------------------------------////MYSQL////----------------------------------------//
 	
 	
 	// -----------------------------SQL-------------------------//

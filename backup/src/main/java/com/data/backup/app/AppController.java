@@ -3,7 +3,6 @@ package com.data.backup.app;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -39,7 +38,7 @@ public class AppController {
 	}
 	
 	@GetMapping("/mongo/showAll")
-	public String showAll() {
+	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
 //---------------------MYSQL-----------------------------------
@@ -67,8 +66,8 @@ public class AppController {
 	}
 	
 	 @GetMapping("/sql/alldatabases")
-	    public String showall() {
+		public Map<Integer, String> showall() {
 	        Map<Integer, String> result = appService.viewall();
-	        return result.toString();
+			return result;
 	    }
 }
