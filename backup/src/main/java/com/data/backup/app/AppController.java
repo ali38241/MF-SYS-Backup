@@ -3,6 +3,7 @@ package com.data.backup.app;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class AppController {
 	}
 	
 	@GetMapping("/mongo/showAll")
-	public String showAll() {
+	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
 //---------------------MYSQL-----------------------------------

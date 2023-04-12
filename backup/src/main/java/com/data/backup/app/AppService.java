@@ -5,10 +5,16 @@ package com.data.backup.app;
 import java.io.IOException;
 //import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 //import java.util.zip.ZipEntry;
 //import java.util.zip.ZipOutputStream;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoIterable;
 
 @Service
 public class AppService {
@@ -58,29 +64,19 @@ public class AppService {
 		}
 	}
 	
-	public String showAll() {
-		ProcessBuilder pb = new ProcessBuilder("mongosh", "--quiet", "--host", host, "--port", String.valueOf(port),
-				"--eval", "db.getMongo().getDBNames()");
-		String result = "";
-		try {
-            Process p = pb.start();
-            result = new String(p.getInputStream().readAllBytes());
-            int exitCode = p.waitFor();
-            
-            if (exitCode == 0) {
-                System.out.println("Shown.");
-            } else {
-                System.err.println("Error showing");
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-		return result;
+	public Map<Integer, String> showAll() {
+		MongoClient mongo = MongoClients.create();
+		MongoIterable<String> list = mongo.listDatabaseNames();
+		Map<Integer, String> map = new HashMap<>();
+		int i = 1;
+		for (String name : list) {
+			map.put(i++, name);
+		}
+		return map;
 		
 	}
 
 //-------------------------------////eido////----------------------------------------//
-	
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
