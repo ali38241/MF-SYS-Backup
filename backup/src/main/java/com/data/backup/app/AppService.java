@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 //import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 //import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,24 +89,34 @@ public class AppService {
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
-	private String outputfile = "C:\\Users\\Windows\\Desktop\\db\\";
+	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup\\";
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
+	LocalDate date = LocalDate.now();
+	String backUpFolderName = dtf.format(date);
+	String path = outputfile + "\\" + backUpFolderName;
+	File backupFolder = new File(path);
 	
 	
-//	------------------------------ backupdatabses-------------------------//
+//	------------------------------ backup databses-------------------------//
 	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			
 			boolean i = false;
-			
+			boolean success = backupFolder.mkdir();
+			if(!success) {
+				System.out.println("folder already exist with name: " + backUpFolderName);
+			}else {
+				System.out.print("folder created successfully with name:" + backUpFolderName);
+			}
 			for(String x: dbname) {
 				
-				String outputfilename = outputfile + x + ".sql";
+				String outputfilename = path + x + ".sql";
 				File filename = new File(outputfilename);
 				if(filename.exists()) {
 					System.out.println(outputfilename +" already exists");
 				}else {
 				
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-					dbusername, dbpassword, x, outputfile+x+".sql");
+					dbusername, dbpassword, x, path+"\\"+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;
@@ -116,14 +127,14 @@ public class AppService {
 
 	
 	
-//	-----------------------------------restire databases----------------------
+//	-----------------------------------restore databases----------------------
 	
 	public boolean restoreDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean i = false;
 		for(String x: dbname) {
 			
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-					dbusername, dbpassword, outputfile+x+".sql");
+					dbusername, dbpassword, path+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;
@@ -171,24 +182,24 @@ public class AppService {
 	}
 
 	
-//	--------------------------zip files-------------------
+//	--------------------------Zip files-------------------
 	
 	
 	
 	public boolean createzipfile(List<String> filenames) throws IOException {
-	    String zipFolder = "C:\\Users\\Windows\\Desktop\\db\\";
-	    File zipFolderFile = new File(zipFolder);
+//	    String zipFolder = "C:\\Users\\Windows\\Desktop\\db\\";
+	    File zipFolderFile = new File(path);
 	    if (!zipFolderFile.exists()) {
 	        zipFolderFile.mkdirs();
 	    }
 
 	    LocalDate ld = LocalDate.now();
-	    String zipFilename = zipFolder + "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+	    String zipFilename = path + "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
 
 	    byte[] buffer = new byte[1024];
 	    boolean hasFile = false;
 	    for (String filename : filenames) {
-	        File file = new File(zipFolder + filename + ".sql");
+	        File file = new File(path + filename + ".sql");
 	        if (file.exists()) {
 	            hasFile = true;
 	            break;
@@ -202,7 +213,7 @@ public class AppService {
 	    FileOutputStream fos = new FileOutputStream(zipFilename);
 	    ZipOutputStream zos = new ZipOutputStream(fos);
 	    for (String filename : filenames) {
-	        File file = new File(zipFolder + filename + ".sql");
+	        File file = new File(path + filename + ".sql");
 	        if (file.exists()) {
 	            FileInputStream fis = new FileInputStream(file);
 	            zos.putNextEntry(new ZipEntry(filename + ".sql"));
@@ -221,8 +232,6 @@ public class AppService {
 	    fos.close();
 	    return true;
 	}
-
-
 
 }
 	
