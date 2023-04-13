@@ -1,13 +1,20 @@
 package com.data.backup.app;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 //import java.io.File;
 //import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 //import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 //import java.util.zip.ZipOutputStream;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 //import java.util.zip.ZipEntry;
 //import java.util.zip.ZipOutputStream;
@@ -91,11 +98,18 @@ public class AppService {
 			
 			for(String x: dbname) {
 				
+				String outputfilename = outputfile + x + ".sql";
+				File filename = new File(outputfilename);
+				if(filename.exists()) {
+					System.out.println(outputfilename +" already exists");
+				}else {
+				
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
 					dbusername, dbpassword, x, outputfile+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;
+				}
 	}
 			return i;
 	}
@@ -154,6 +168,58 @@ public class AppService {
 	    }
 	    System.out.print(result);
 	    return result;
+	}
+
+	
+//	--------------------------zip files-------------------
+	
+	
+	
+	public boolean createzipfile(List<String> filenames) throws IOException {
+	    String zipFolder = "C:\\Users\\Windows\\Desktop\\db\\";
+	    File zipFolderFile = new File(zipFolder);
+	    if (!zipFolderFile.exists()) {
+	        zipFolderFile.mkdirs();
+	    }
+
+	    LocalDate ld = LocalDate.now();
+	    String zipFilename = zipFolder + "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+
+	    byte[] buffer = new byte[1024];
+	    boolean hasFile = false;
+	    for (String filename : filenames) {
+	        File file = new File(zipFolder + filename + ".sql");
+	        if (file.exists()) {
+	            hasFile = true;
+	            break;
+	        }
+	    }
+	    if (!hasFile) {
+	        System.out.println("No files to zip");
+	        return false;
+	    }
+
+	    FileOutputStream fos = new FileOutputStream(zipFilename);
+	    ZipOutputStream zos = new ZipOutputStream(fos);
+	    for (String filename : filenames) {
+	        File file = new File(zipFolder + filename + ".sql");
+	        if (file.exists()) {
+	            FileInputStream fis = new FileInputStream(file);
+	            zos.putNextEntry(new ZipEntry(filename + ".sql"));
+	            int length;
+	            while ((length = fis.read(buffer)) > 0) {
+	                zos.write(buffer, 0, length);
+	            }
+	            zos.closeEntry();
+	            fis.close();
+	        } else {
+	            System.out.println("File " + filename + ".sql" + " does not exist");
+	        }
+	    }
+
+	    zos.close();
+	    fos.close();
+	    return true;
 	}
 
 
