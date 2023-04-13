@@ -3,6 +3,7 @@ package com.data.backup.app;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,12 @@ public class AppController {
 	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
+
+	@GetMapping("/mongo/zip/{dbName}")
+	public void zip(@PathVariable List<String> dbName) throws IOException {
+		appService.zip(dbName);
+	}
+
 //---------------------MYSQL-----------------------------------
 	
 	@GetMapping("/sql/getbackup/{dbname}")
@@ -52,7 +59,6 @@ public class AppController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating backup");
 		}
 	}
-	
 	
 	
 	@PostMapping("/sql/restore/{dbname}")
