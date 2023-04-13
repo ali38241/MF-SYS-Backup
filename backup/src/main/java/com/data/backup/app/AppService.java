@@ -21,6 +21,8 @@ import com.mongodb.client.MongoIterable;
 
 @Service
 public class AppService {
+
+	// ----------------------------------Mongo--------------------------------------------
 	String host = "localhost";
 	int port = 27017;
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\MongoBackup";
@@ -30,6 +32,7 @@ public class AppService {
 	String backupFolderPath = backPath + "\\" + backupFolderName;
 	File backupFolder = new File(backupFolderPath);
 
+//--------------------------------Backup Mongo Databases----------------------------------
 	public void backup(ArrayList<String> dbName) {
 
 		boolean success = backupFolder.mkdir();
@@ -67,7 +70,8 @@ public class AppService {
 			}
 		}
 	}
-		
+
+	// -----------------------------Restore Mongo Databases----------------------
 	public void restore(ArrayList<String> dbName) {
 		for(String db: dbName) {
 			ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, backupFolderPath + "\\" + db);
@@ -86,7 +90,9 @@ public class AppService {
 
 		}
 	}
-	
+
+	// ------------------------------Display All Mongo
+	// Databases----------------------
 	public Map<Integer, String> showAll() {
 		MongoClient mongo = MongoClients.create();
 		MongoIterable<String> list = mongo.listDatabaseNames();
@@ -99,6 +105,7 @@ public class AppService {
 		
 	}
 
+//----------------------------CREATE-Mongo-Zip-----------------------------------------
 	public boolean zip(List<String> folderNames) throws IOException {
 		byte[] buffer = new byte[1024];
 		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
