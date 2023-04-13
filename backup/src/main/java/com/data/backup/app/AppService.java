@@ -145,22 +145,22 @@ public class AppService {
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup\\";
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
-	LocalDate date = LocalDate.now();
-	String backUpFolderName = dtf.format(date);
-	String path = outputfile + "\\" + backUpFolderName;
-	File backupFolder = new File(path);
+	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
+	LocalDate sqldate = LocalDate.now();
+	String sqlbackUpFolderName = sqldtf.format(sqldate);
+	String path = outputfile + "\\" + sqlbackUpFolderName;
+	File sqlbackupFolder = new File(path);
 	
 	
 //	------------------------------ backup databses-------------------------//
 	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			
 			boolean i = false;
-			boolean success = backupFolder.mkdir();
+			boolean success = sqlbackupFolder.mkdir();
 			if(!success) {
-				System.out.println("folder already exist with name: " + backUpFolderName);
+				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
 			}else {
-				System.out.print("folder created successfully with name:" + backUpFolderName);
+				System.out.print("folder created successfully with name:" + sqlbackUpFolderName);
 			}
 			for(String x: dbname) {
 				
@@ -249,12 +249,12 @@ public class AppService {
 	    }
 
 	    LocalDate ld = LocalDate.now();
-	    String zipFilename = path + "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+	    String zipFilename = path +"\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
 
 	    byte[] buffer = new byte[1024];
 	    boolean hasFile = false;
 	    for (String filename : filenames) {
-	        File file = new File(path + filename + ".sql");
+	        File file = new File(path +"\\" + filename + ".sql");
 	        if (file.exists()) {
 	            hasFile = true;
 	            break;
@@ -268,7 +268,7 @@ public class AppService {
 	    FileOutputStream fos = new FileOutputStream(zipFilename);
 	    ZipOutputStream zos = new ZipOutputStream(fos);
 	    for (String filename : filenames) {
-	        File file = new File(path + filename + ".sql");
+	        File file = new File(path + "\\" + filename + ".sql");
 	        if (file.exists()) {
 	            FileInputStream fis = new FileInputStream(file);
 	            zos.putNextEntry(new ZipEntry(filename + ".sql"));
