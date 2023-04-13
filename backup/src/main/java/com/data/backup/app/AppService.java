@@ -3,22 +3,18 @@ package com.data.backup.app;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-//import java.io.File;
-//import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-//import java.nio.file.Files;
+
+
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-//import java.util.zip.ZipOutputStream;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-//import java.util.zip.ZipEntry;
-//import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Service;
 
@@ -28,18 +24,46 @@ import com.mongodb.client.MongoIterable;
 
 @Service
 public class AppService {
+
+	// ----------------------------------Mongo--------------------------------------------
 	String host = "localhost";
 	int port = 27017;
-	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump";
+	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\MongoBackup";
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyy");
+	LocalDate date = LocalDate.now();
+	String backupFolderName = dtf.format(date);
+	String backupFolderPath = backPath + "\\" + backupFolderName;
+	File backupFolder = new File(backupFolderPath);
+
+//--------------------------------Backup Mongo Databases----------------------------------
 	public void backup(ArrayList<String> dbName) {
+
+		boolean success = backupFolder.mkdir();
+		if (!success) {
+			System.out.println("Folder already exists with name: " + backupFolderName + " in " + backPath
+					+ ". Not created new one.");
+		} else {
+			System.out.println("Folder created with name: " + backupFolderName + " in " + backPath);
+		}
+
 		for (String db : dbName) {
-			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host, "--port",
-					String.valueOf(port), "--out", backPath);
+			File backupFile = new File(backupFolderPath + "\\" + db);
+			if (backupFile.exists()) {
+				String message = String.format("A backup for database \"%s\" already exists at \"%s\". Skipping backup",
+						db,
+						backupFolderPath);
+
+				System.out.println(message);
+				continue;
+			}
+			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host,
+					"--port",
+					String.valueOf(port), "--out", backupFolderPath);
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
 				if (exitCode == 0) {
-					System.out.println("Backup created successfully!");
+					System.out.println("Backup created successfully for : " + db);
 
 				} else {
 					System.err.println("Error creating backup!");
@@ -49,11 +73,11 @@ public class AppService {
 			}
 		}
 	}
-		
+
+	// -----------------------------Restore Mongo Databases----------------------
 	public void restore(ArrayList<String> dbName) {
-		String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Dump\\";
 		for(String db: dbName) {
-			ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, backPath+db);
+			ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, backupFolderPath + "\\" + db);
 			try {
 	            Process p = pb.start();
 	            int exitCode = p.waitFor();
@@ -69,7 +93,9 @@ public class AppService {
 
 		}
 	}
-	
+
+	// ------------------------------Display All Mongo
+	// Databases----------------------
 	public Map<Integer, String> showAll() {
 		MongoClient mongo = MongoClients.create();
 		MongoIterable<String> list = mongo.listDatabaseNames();
@@ -82,6 +108,35 @@ public class AppService {
 		
 	}
 
+//----------------------------CREATE-Mongo-Zip-----------------------------------------
+	public boolean zip(List<String> folderNames) throws IOException {
+		byte[] buffer = new byte[1024];
+		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
+		ZipOutputStream zos = new ZipOutputStream(fos);
+		for (String folderName : folderNames) {
+			File directory = new File(backupFolderPath + "\\" + folderName);
+			if (directory.isDirectory()) {
+				for (File file : directory.listFiles()) {
+	                System.out.println("Adding file " + file.getName() + " to zip");
+					FileInputStream fis = new FileInputStream(file);
+					zos.putNextEntry(new ZipEntry(folderName + "/" + file.getName()));
+					int length;
+					while ((length = fis.read(buffer)) > 0) {
+						zos.write(buffer, 0, length);
+					}
+					zos.closeEntry();
+					fis.close();
+				}
+			} else {
+				throw new IllegalArgumentException(backupFolderPath + folderName + " is not a directory");
+			}
+		}
+		zos.close();
+		fos.close();
+		System.out.println("Created zip file: " + backupFolderPath + ".zip");
+		System.out.println("Files added to the zip: " + folderNames);
+		return true;
+	}
 //-------------------------------////MYSQL////----------------------------------------//
 	
 	
