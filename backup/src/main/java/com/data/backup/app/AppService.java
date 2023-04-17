@@ -26,15 +26,15 @@ public class AppService {
 	String host = "localhost";
 	int port = 27017;
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\MongoBackup";
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyy");
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 	LocalDate date = LocalDate.now();
 	String backupFolderName = dtf.format(date);
 	String backupFolderPath = backPath + "\\" + backupFolderName;
 	File backupFolder = new File(backupFolderPath);
 
 //--------------------------------Backup Mongo Databases----------------------------------
-	public void backup(ArrayList<String> dbName) {
-
+	public Map<String, String> backup(ArrayList<String> dbName) {
+		Map<String, String> map = new HashMap<>();
 		boolean success = backupFolder.mkdir();
 		if (!success) {
 			System.out.println("Folder already exists with name: " + backupFolderName + " in " + backPath
@@ -59,6 +59,7 @@ public class AppService {
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
+				map.put(db, backupFolderName);
 				if (exitCode == 0) {
 					System.out.println("Backup created successfully for : " + db);
 
@@ -69,6 +70,7 @@ public class AppService {
 				e.printStackTrace();
 			}
 		}
+		return map;
 	}
 
 	// -----------------------------Restore Mongo Databases----------------------
