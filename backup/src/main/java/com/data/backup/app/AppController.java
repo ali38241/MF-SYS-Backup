@@ -44,13 +44,14 @@ public class AppController {
 	}
 
 	@GetMapping("/mongo/zip/{dbName}")
-	public void zip(@PathVariable List<String> dbName) throws IOException {
-		appService.zip(dbName);
+	public String zip(@PathVariable List<String> dbName) throws IOException {
+		return appService.zip(dbName);
 	}
 
 //---------------------MYSQL-----------------------------------
 	
 	@GetMapping("/sql/getbackup/{dbname}")
+<<<<<<< Updated upstream
 	public ResponseEntity<String> backupDatabase(@PathVariable ArrayList<String> dbname) throws IOException,InterruptedException{
 		boolean success = appService.backupDatabase(dbname);
 		if(success) {
@@ -58,6 +59,12 @@ public class AppController {
 		}else {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating backup");
 		}
+=======
+	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname)
+			throws IOException, InterruptedException {
+		Map<String, String> map = appService.backupDatabase(dbname);
+		return map;
+>>>>>>> Stashed changes
 	}
 	
 	

@@ -22,6 +22,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoIterable;
 
+
 @Service
 public class AppService {
 
@@ -111,7 +112,7 @@ public class AppService {
 	}
 
 //----------------------------CREATE-Mongo-Zip-----------------------------------------
-	public boolean zip(List<String> folderNames) throws IOException {
+	public String zip(List<String> folderNames) throws IOException {
 		byte[] buffer = new byte[1024];
 		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
 		ZipOutputStream zos = new ZipOutputStream(fos);
@@ -135,9 +136,10 @@ public class AppService {
 		}
 		zos.close();
 		fos.close();
-		System.out.println("Created zip file: " + backupFolderPath + ".zip");
-		System.out.println("Files added to the zip: " + folderNames);
-		return true;
+		return ("Created zip file: " + backupFolderPath + ".zip \n" + "Files added to the zip: " + folderNames);
+//		System.out.println("Created zip file: " + backupFolderPath + ".zip");
+//		System.out.println("Files added to the zip: " + folderNames);
+
 	}
 //-------------------------------////MYSQL////----------------------------------------//
 	
