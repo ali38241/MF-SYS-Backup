@@ -157,8 +157,8 @@ public class AppService {
 	
 	
 //	------------------------------ backup databses-------------------------//
-	public boolean backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
-			
+	public Map<String, String> backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
+			Map<String, String> map = new HashMap<>();
 			boolean i = false;
 			boolean success = sqlbackupFolder.mkdir();
 			if(!success) {
@@ -178,10 +178,11 @@ public class AppService {
 					dbusername, dbpassword, x, path+"\\"+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
+			map.put(x, outputfilename);
 			i = process.exitValue()==0;
 				}
 	}
-			return i;
+			return map;
 	}
 
 	
