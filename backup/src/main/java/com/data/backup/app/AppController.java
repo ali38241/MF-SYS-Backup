@@ -51,20 +51,10 @@ public class AppController {
 //---------------------MYSQL-----------------------------------
 	
 	@GetMapping("/sql/getbackup/{dbname}")
-<<<<<<< Updated upstream
-	public ResponseEntity<String> backupDatabase(@PathVariable ArrayList<String> dbname) throws IOException,InterruptedException{
-		boolean success = appService.backupDatabase(dbname);
-		if(success) {
-			return ResponseEntity.ok("Backup created successfully");
-		}else {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating backup");
-		}
-=======
 	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname)
 			throws IOException, InterruptedException {
-		Map<String, String> map = appService.backupDatabase(dbname);
-		return map;
->>>>>>> Stashed changes
+//		Map<String, String> map = appService.backupDatabase(dbname);
+		return null;
 	}
 	
 	
