@@ -44,8 +44,9 @@ public class AppController {
 	}
 
 	@GetMapping("/mongo/zip/{dbName}")
-	public void zip(@PathVariable List<String> dbName) throws IOException {
-		appService.zip(dbName);
+	public String zip(@PathVariable List<String> dbName) throws IOException {
+		return appService.zip(dbName);
+//		appService.createzipfile(dbName);
 	}
 
 //---------------------MYSQL-----------------------------------
@@ -55,7 +56,6 @@ public class AppController {
 			throws IOException, InterruptedException {
 		Map<String, String> map = appService.backupDatabase(dbname);
 		return map;
-
 	}
 	
 	
