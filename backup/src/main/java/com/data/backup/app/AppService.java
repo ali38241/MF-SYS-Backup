@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -114,35 +115,7 @@ public class AppService {
 		return map;
 		
 	}
-
-//----------------------------CREATE-Mongo-Zip-----------------------------------------
-//	public String zip(List<String> folderNames) throws IOException {
-//		byte[] buffer = new byte[1024];
-//		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
-//		ZipOutputStream zos = new ZipOutputStream(fos);
-//		for (String folderName : folderNames) {
-//			File directory = new File(backupFolderPath + "\\" + folderName);
-//			if (directory.isDirectory()) {
-//				for (File file : directory.listFiles()) {
-//	                System.out.println("Adding file " + file.getName() + " to zip");
-//					FileInputStream fis = new FileInputStream(file);
-//					zos.putNextEntry(new ZipEntry(folderName + "/" + file.getName()));
-//					int length;
-//					while ((length = fis.read(buffer)) > 0) {
-//						zos.write(buffer, 0, length);
-//					}
-//					zos.closeEntry();
-//					fis.close();
-//				}
-//			} else {
-//				throw new IllegalArgumentException(backupFolderPath +"\\"+ folderName + " Does not exists.");
-//			}
-//		}
-//		zos.close();
-//		fos.close();
-//		return ("Created zip file: " + backupFolderPath + ".zip \n" + "Files added to the zip: " + folderNames);
-//
-//	}
+	//-----------------Mongo-zip-download----------------------------
 	public String zip(List<String> folderNames) throws IOException {
 	    byte[] buffer = new byte[1024];
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -198,37 +171,34 @@ public class AppService {
 	
 //	------------------------------ backup databses-------------------------//
 
-	public Map<String, String> backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
+	public Map<String, String> backupDatabase(List<String> dbname) throws IOException, InterruptedException{
 			Map<String, String> map = new HashMap<>();
-			
 			boolean i = false;
-		
 			boolean success = sqlbackupFolder.mkdir();
 			if(!success) {
 				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
 			}else {
-				System.out.print("folder created successfully with name:" + sqlbackUpFolderName);
+				System.out.println("folder created successfully with name:" + sqlbackUpFolderName);
 			}
 			for(String x: dbname) {
-				
 				String outputfilename = path + x + ".sql";
 				File filename = new File(outputfilename);
 				if(filename.exists()) {
 					System.out.println(outputfilename +" already exists");
 				}else {
-				
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
 					dbusername, dbpassword, x, path+"\\"+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
-			map.put(x, outputfilename);
+			map.put(x, sqlbackUpFolderName);
 			i = process.exitValue()==0;
 			if (i) {
 				System.out.println("Backup Created successfully for: " + x);
+			}else {
+				System.out.println("Error creating backup");
 			}
 				}
 	}
-
 	return map;
 	}
 
@@ -245,7 +215,6 @@ public class AppService {
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;
-			
 		}
 		return i;
 	}
@@ -271,7 +240,7 @@ public class AppService {
 	        for (String line : lines) {
 	            String[] parts = line.split("\t");
 	            if (parts.length > 0) {
-	                result.put(i++, parts[0]);
+	                result.put(i++, parts[0].replaceAll("\r", ""));
 	            }
 	        }
 	        int exitCode = p.waitFor();
@@ -290,23 +259,11 @@ public class AppService {
 
 	
 //	--------------------------Zip files-------------------
-	
-	
-	
-	public boolean createzipfile(List<String> filenames) throws IOException {
-//	    String zipFolder = "C:\\Users\\Windows\\Desktop\\db\\";
-	    File zipFolderFile = new File(path);
-	    if (!zipFolderFile.exists()) {
-	        zipFolderFile.mkdirs();
-	    }
-
-	    LocalDate ld = LocalDate.now();
-	    String zipFilename = path +"\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
-
+	public void createzipfile(List<String> filenames) throws IOException {
 	    byte[] buffer = new byte[1024];
 	    boolean hasFile = false;
 	    for (String filename : filenames) {
-	        File file = new File(path +"\\" + filename + ".sql");
+	        File file = new File(path + "\\" + filename + ".sql");
 	        if (file.exists()) {
 	            hasFile = true;
 	            break;
@@ -314,11 +271,15 @@ public class AppService {
 	    }
 	    if (!hasFile) {
 	        System.out.println("No files to zip");
-	        return false;
+	        return;
 	    }
+	    LocalDate ld = LocalDate.now();
+	    String x = "\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+	    String zipFilename = path + x;
 
-	    FileOutputStream fos = new FileOutputStream(zipFilename);
-	    ZipOutputStream zos = new ZipOutputStream(fos);
+
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ZipOutputStream zos = new ZipOutputStream(baos);
 	    for (String filename : filenames) {
 	        File file = new File(path + "\\" + filename + ".sql");
 	        if (file.exists()) {
@@ -336,9 +297,21 @@ public class AppService {
 	    }
 
 	    zos.close();
-	    fos.close();
-	    return true;
+	    byte[] zipBytes = baos.toByteArray();
+	    baos.close();
+	    HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+
+	    response.setContentType("application/zip");
+	    response.setHeader("Content-Disposition", "attachment; filename=\"" + x + "\"");
+	    response.setContentLength(zipBytes.length);
+
+	    OutputStream os = response.getOutputStream();
+	    os.write(zipBytes);
+	    os.flush();
+	    os.close();
 	}
+
+
 
 }
 	
