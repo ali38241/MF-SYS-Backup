@@ -41,8 +41,8 @@ public class AppService {
 	File backupFolder = new File(backupFolderPath);
 
 //--------------------------------Backup Mongo Databases----------------------------------
-	public Map<String, String> backup(ArrayList<String> dbName) {
-		Map<String, String> map = new HashMap<>();
+	public List<Map<String, String>> backup(ArrayList<String> dbName) {
+	    List<Map<String, String>> backupList = new ArrayList<>();
 		boolean success = backupFolder.mkdir();
 		if (!success) {
 			System.out.println("Folder already exists with name: " + backupFolderName + " in " + backPath
@@ -52,7 +52,9 @@ public class AppService {
 		}
 
 		for (String db : dbName) {
-			map.put(db, backupFolderName);
+            Map<String, String> map = new HashMap<>();
+			map.put("Database", db);
+			map.put("Date", backupFolderName);
 			File backupFile = new File(backupFolderPath + "\\" + db);
 			if (backupFile.exists()) {
 				String message = String.format("A backup for database \"%s\" already exists at \"%s\". Updating Backup.",
@@ -75,11 +77,12 @@ public class AppService {
 				} else {
 					System.err.println("Error creating backup!");
 				}
+				backupList.add(map);
 			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		return map;
+		return backupList;
 	}
 
 	// -----------------------------Restore Mongo Databases----------------------
@@ -171,9 +174,9 @@ public class AppService {
 	
 //	------------------------------ backup databses-------------------------//
 
-	public Map<String, String> backupDatabase(List<String> dbname) throws IOException, InterruptedException{
-			Map<String, String> map = new HashMap<>();
+	public List<Map<String, String>> backupDatabase(List<String> dbname) throws IOException, InterruptedException{
 			boolean i = false;
+		    List<Map<String, String>> backupList = new ArrayList<>();
 			boolean success = sqlbackupFolder.mkdir();
 			if(!success) {
 				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
@@ -190,16 +193,19 @@ public class AppService {
 					dbusername, dbpassword, x, path+"\\"+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
-			map.put(x, sqlbackUpFolderName);
+            Map<String, String> map = new HashMap<>();
+			map.put("database", x);
+			map.put("Date", sqlbackUpFolderName);
 			i = process.exitValue()==0;
 			if (i) {
 				System.out.println("Backup Created successfully for: " + x);
 			}else {
 				System.out.println("Error creating backup");
 			}
+			backupList.add(map);
 				}
 	}
-	return map;
+	return backupList;
 	}
 
 	
@@ -275,7 +281,7 @@ public class AppService {
 	    }
 	    LocalDate ld = LocalDate.now();
 	    String x = "\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
-	    String zipFilename = path + x;
+//	    String zipFilename = path + x;
 
 
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
