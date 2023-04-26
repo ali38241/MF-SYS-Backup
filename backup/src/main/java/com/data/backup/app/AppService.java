@@ -1,5 +1,6 @@
 package com.data.backup.app;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,10 +18,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoIterable;
+
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 @Service
@@ -48,14 +54,15 @@ public class AppService {
 		}
 
 		for (String db : dbName) {
+			map.put(db, backupFolderName);
 			File backupFile = new File(backupFolderPath + "\\" + db);
 			if (backupFile.exists()) {
-				String message = String.format("A backup for database \"%s\" already exists at \"%s\". Skipping backup",
+				String message = String.format("A backup for database \"%s\" already exists at \"%s\". Updating Backup.",
 						db,
 						backupFolderPath);
 
 				System.out.println(message);
-				continue;
+//				continue;
 			}
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host,
 					"--port",
@@ -63,7 +70,7 @@ public class AppService {
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
-				map.put(db, backupFolderName);
+				
 				if (exitCode == 0) {
 					System.out.println("Backup created successfully for : " + db);
 
@@ -112,34 +119,70 @@ public class AppService {
 	}
 
 //----------------------------CREATE-Mongo-Zip-----------------------------------------
+//	public String zip(List<String> folderNames) throws IOException {
+//		byte[] buffer = new byte[1024];
+//		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
+//		ZipOutputStream zos = new ZipOutputStream(fos);
+//		for (String folderName : folderNames) {
+//			File directory = new File(backupFolderPath + "\\" + folderName);
+//			if (directory.isDirectory()) {
+//				for (File file : directory.listFiles()) {
+//	                System.out.println("Adding file " + file.getName() + " to zip");
+//					FileInputStream fis = new FileInputStream(file);
+//					zos.putNextEntry(new ZipEntry(folderName + "/" + file.getName()));
+//					int length;
+//					while ((length = fis.read(buffer)) > 0) {
+//						zos.write(buffer, 0, length);
+//					}
+//					zos.closeEntry();
+//					fis.close();
+//				}
+//			} else {
+//				throw new IllegalArgumentException(backupFolderPath +"\\"+ folderName + " Does not exists.");
+//			}
+//		}
+//		zos.close();
+//		fos.close();
+//		return ("Created zip file: " + backupFolderPath + ".zip \n" + "Files added to the zip: " + folderNames);
+//
+//	}
 	public String zip(List<String> folderNames) throws IOException {
-		byte[] buffer = new byte[1024];
-		FileOutputStream fos = new FileOutputStream(backupFolderPath + ".zip");
-		ZipOutputStream zos = new ZipOutputStream(fos);
-		for (String folderName : folderNames) {
-			File directory = new File(backupFolderPath + "\\" + folderName);
-			if (directory.isDirectory()) {
-				for (File file : directory.listFiles()) {
+	    byte[] buffer = new byte[1024];
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ZipOutputStream zos = new ZipOutputStream(baos);
+	    for (String folderName : folderNames) {
+	        File directory = new File(backupFolderPath + "\\" + folderName);
+	        if (directory.isDirectory()) {
+	            for (File file : directory.listFiles()) {
 	                System.out.println("Adding file " + file.getName() + " to zip");
-					FileInputStream fis = new FileInputStream(file);
-					zos.putNextEntry(new ZipEntry(folderName + "/" + file.getName()));
-					int length;
-					while ((length = fis.read(buffer)) > 0) {
-						zos.write(buffer, 0, length);
-					}
-					zos.closeEntry();
-					fis.close();
-				}
-			} else {
-				throw new IllegalArgumentException(backupFolderPath + folderName + " is not a directory");
-			}
-		}
-		zos.close();
-		fos.close();
-		return ("Created zip file: " + backupFolderPath + ".zip \n" + "Files added to the zip: " + folderNames);
-//		System.out.println("Created zip file: " + backupFolderPath + ".zip");
-//		System.out.println("Files added to the zip: " + folderNames);
+	                FileInputStream fis = new FileInputStream(file);
+	                zos.putNextEntry(new ZipEntry(folderName + "/" + file.getName()));
+	                int length;
+	                while ((length = fis.read(buffer)) > 0) {
+	                    zos.write(buffer, 0, length);
+	                }
+	                zos.closeEntry();
+	                fis.close();
+	            }
+	        } else {
+	            throw new IllegalArgumentException(backupFolderPath + "\\" + folderName + " Does not exists.");
+	        }
+	    }
+	    zos.close();
+	    baos.close();
 
+	    // Set the response headers
+	    HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+	    response.setContentType("application/zip");
+	    response.setHeader("Content-Disposition", "attachment; filename=\"" + backupFolderName + ".zip\"");
+
+	    // Write the content of the generated zip file to the response output stream
+	    ServletOutputStream sos = response.getOutputStream();
+	    sos.write(baos.toByteArray());
+	    sos.flush();
+	    sos.close();
+
+	    return ("Created zip file: " + backupFolderPath + ".zip \n" + "Files added to the zip: " + folderNames);
 	}
 //-------------------------------////MYSQL////----------------------------------------//
 	

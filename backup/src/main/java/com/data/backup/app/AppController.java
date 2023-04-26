@@ -46,6 +46,7 @@ public class AppController {
 	@GetMapping("/mongo/zip/{dbName}")
 	public String zip(@PathVariable List<String> dbName) throws IOException {
 		return appService.zip(dbName);
+//		appService.createzipfile(dbName);
 	}
 
 //---------------------MYSQL-----------------------------------
