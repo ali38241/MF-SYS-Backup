@@ -54,8 +54,8 @@ public class AppController {
 	@GetMapping("/sql/getbackup/{dbname}")
 	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname)
 			throws IOException, InterruptedException {
-//		Map<String, String> map = appService.backupDatabase(dbname);
-		return null;
+		Map<String, String> map = appService.backupDatabase(dbname);
+		return map;
 	}
 	
 	

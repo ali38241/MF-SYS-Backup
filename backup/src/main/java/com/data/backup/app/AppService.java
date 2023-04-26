@@ -7,9 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -191,7 +188,7 @@ public class AppService {
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
-	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup\\";
+	private String outputfile = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Backup\\SqlBackup";
 	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
 	LocalDate sqldate = LocalDate.now();
 	String sqlbackUpFolderName = sqldtf.format(sqldate);
@@ -200,9 +197,12 @@ public class AppService {
 	
 	
 //	------------------------------ backup databses-------------------------//
+
 	public Map<String, String> backupDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
 			Map<String, String> map = new HashMap<>();
+			
 			boolean i = false;
+		
 			boolean success = sqlbackupFolder.mkdir();
 			if(!success) {
 				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
@@ -223,9 +223,13 @@ public class AppService {
 			process.waitFor();
 			map.put(x, outputfilename);
 			i = process.exitValue()==0;
+			if (i) {
+				System.out.println("Backup Created successfully for: " + x);
+			}
 				}
 	}
-			return map;
+
+	return map;
 	}
 
 	
