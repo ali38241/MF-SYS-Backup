@@ -52,7 +52,7 @@ public class AppController {
 //---------------------MYSQL-----------------------------------
 	
 	@GetMapping("/sql/getbackup/{dbname}")
-	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname)
+	public Map<String, String> backupDatabase(@PathVariable List<String> dbname)
 			throws IOException, InterruptedException {
 		Map<String, String> map = appService.backupDatabase(dbname);
 		return map;
@@ -80,14 +80,16 @@ public class AppController {
 	 
 	 
 	 @GetMapping("/sql/createzip/{filenames}")
-	 public ResponseEntity<String> createzipfiles(@PathVariable List<String> filenames) throws IOException{
-		 boolean success = appService.createzipfile(filenames);
-		 if(success) {
-			 return ResponseEntity.ok("Zip file created successfully");
+	 public void createzipfiles(@PathVariable List<String> filenames) throws IOException{
+		 appService.createzipfile(filenames);
+		 
+//		 boolean success = appService.createzipfile(filenames);
+//		 if(success) {
+//			 return ResponseEntity.ok("Zip file created successfully");
 			 
-		 }else {
-			 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating zip file");
-		 }
+//		 }else {
+//			 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating zip file");
+//		 }
 	 }
 	 
 	 
