@@ -29,7 +29,7 @@ public class AppController {
 	
 	
 	@GetMapping("/mongo/backup/{dbName}")
-	public Map<String, String> backUpMultiple(@PathVariable ArrayList<String> dbName) {
+	public List<Map<String, String>> backUpMultiple(@PathVariable ArrayList<String> dbName) {
 		return appService.backup(dbName);
 	}
 	
@@ -52,9 +52,9 @@ public class AppController {
 //---------------------MYSQL-----------------------------------
 	
 	@GetMapping("/sql/getbackup/{dbname}")
-	public Map<String, String> backupDatabase(@PathVariable List<String> dbname)
+	public List<Map<String, String>> backupDatabase(@PathVariable List<String> dbname)
 			throws IOException, InterruptedException {
-		Map<String, String> map = appService.backupDatabase(dbname);
+		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
 	}
 	
