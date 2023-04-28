@@ -164,7 +164,7 @@ public class AppService {
 	
 	private String dbusername = "root";
 	private String dbpassword = "root";
-	private String outputfile = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Backup\\SqlBackup";
+	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup";
 	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
 	LocalDate sqldate = LocalDate.now();
 	String sqlbackUpFolderName = sqldtf.format(sqldate);
@@ -217,7 +217,7 @@ public class AppService {
 		for(String x: dbname) {
 			
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-					dbusername, dbpassword, path+x+".sql");
+					dbusername, dbpassword, path+"\\"+x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;

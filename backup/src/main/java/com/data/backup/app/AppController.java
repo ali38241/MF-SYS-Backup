@@ -51,6 +51,8 @@ public class AppController {
 
 //---------------------MYSQL-----------------------------------
 	
+//	----------------------Backup DataBase----------------------
+	
 	@GetMapping("/sql/getbackup/{dbname}")
 	public List<Map<String, String>> backupDatabase(@PathVariable List<String> dbname)
 			throws IOException, InterruptedException {
@@ -58,6 +60,8 @@ public class AppController {
 		return map;
 	}
 	
+	
+//	----------------------------------------- Restore DataBase----------------------------------
 	
 	@PostMapping("/sql/restore/{dbname}")
 	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
@@ -68,6 +72,9 @@ public class AppController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
 		}
 	}
+	
+	
+//	----------------------------------View All DataBases---------------------
 	
 	 @GetMapping("/sql/alldatabases")
 		public Map<Integer, String> showall() {
