@@ -3,6 +3,7 @@ package com.data.backup.app;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -316,6 +317,35 @@ public class AppService {
 	    os.flush();
 	    os.close();
 	}
+//	-------------------------- Show All backup Databases----------
+	
+
+
+	    public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
+	        File folder = new File(outputfile +"//"+ foldername);
+	        if (!folder.exists()) {
+	            throw new FileNotFoundException("Folder " + foldername + " does not exist");
+	        }
+	        File[] files = folder.listFiles();
+	        if (files == null) {
+	            throw new FileNotFoundException("No files found in folder " + foldername);
+	        }
+	        List<String> backupFileNames = new ArrayList<>();
+	        for (File file : files) {
+	            if (file.isFile()) {
+	                backupFileNames.add(file.getName());
+	            }
+	        }
+	        if (backupFileNames.isEmpty()) {
+	            throw new FileNotFoundException("No backup files found in folder " + foldername);
+	        }
+	        Map<String, List<String>> map = new HashMap<>();
+	        map.put("Database", backupFileNames);
+	        return map;
+	    }
+	    
+
+	
 
 
 

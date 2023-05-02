@@ -1,6 +1,7 @@
 package com.data.backup.app;
 
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -100,4 +102,21 @@ public class AppController {
 	 }
 	 
 	 
+//	 ----------------------------- Show All Backup DataBases-----------------
+	 
+	 @GetMapping("/sql/showBackupFiles/{foldername}")
+	 public ResponseEntity<Map<String, List<String>>> getBackupFileNames(@PathVariable String foldername) {
+	     try {
+	         Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
+	         return ResponseEntity.ok(backupFileNames);
+	     } catch (FileNotFoundException e) {
+	         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+	     } catch (Exception e) {
+	         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+	     }
+	 }
 }
+
+
+	 
+
