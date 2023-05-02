@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,7 +38,7 @@ public class AppService {
 	String host = "localhost";
 	int port = 27017;
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Backup\\MongoBackup";
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MMM-yyyy__HH-mm-ss");
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy__HH-mm-ss");
 	LocalDateTime date = LocalDateTime.now();
 	String backupFolderName = dtf.format(date);
 	String backupFolderPath = backPath + "\\" + backupFolderName;
