@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.MultiValuedMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -44,6 +45,10 @@ public class AppController {
 	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
+	@GetMapping("/mongo/showBackup/{date}")
+		public Map<String, List<String>> showBackup(@PathVariable String date){
+			return appService.showBackup(date);
+		}
 
 	@GetMapping("/mongo/zip/{dbName}")
 	public String zip(@PathVariable List<String> dbName) throws IOException {
