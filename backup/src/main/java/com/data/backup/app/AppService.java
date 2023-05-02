@@ -3,13 +3,16 @@ package com.data.backup.app;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +37,9 @@ public class AppService {
 	// ----------------------------------Mongo--------------------------------------------
 	String host = "localhost";
 	int port = 27017;
-	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\MongoBackup";
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-	LocalDate date = LocalDate.now();
+	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Backup\\MongoBackup";
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy__HH-mm-ss");
+	LocalDateTime date = LocalDateTime.now();
 	String backupFolderName = dtf.format(date);
 	String backupFolderPath = backPath + "\\" + backupFolderName;
 	File backupFolder = new File(backupFolderPath);
@@ -119,6 +122,46 @@ public class AppService {
 		return map;
 		
 	}
+//	----------------------Show backup on disk---------------------
+	public Map<String, List<String>> showBackup(String date) {
+	    String inputDir = backupFolderName;
+	    int index = inputDir.indexOf("_");
+	    String subStr = inputDir.substring(0, index);
+	    File directory = new File(backPath);
+	    Map<String, List<String>> map = new HashMap<>();
+
+	    if (!directory.exists() || !directory.isDirectory()) {
+	        System.out.println("Folder doesn't exist");
+	        return Collections.emptyMap();
+	    }
+
+	    File[] contents = directory.listFiles();
+	    if (contents == null) {
+	        System.out.println("Directory is empty");
+	        return Collections.emptyMap();
+	    }
+
+	    for (File file : contents) {
+	        if (file.isDirectory() && file.getName().startsWith(subStr)) {
+	            List<String> backupList = new ArrayList<>();
+	            File[] subDirectories = file.listFiles();
+	            for (File subDirectory : subDirectories) {
+	                if (subDirectory.isDirectory() && !subDirectory.isFile()) {
+	                    backupList.add(subDirectory.getName());
+	                    System.out.println(subDirectory.getName());
+	                }
+	            }
+	            map.put(file.getName(), backupList);
+	        }
+	    }
+
+	    if (map.isEmpty()) {
+	        System.out.println("No backup exists with name " + date);
+	        return null;
+	    }
+	    return map;
+	}
+
 	//-----------------Mongo-zip-download----------------------------
 	public String zip(List<String> folderNames) throws IOException {
 	    byte[] buffer = new byte[1024];
@@ -282,6 +325,8 @@ public class AppService {
 	    }
 	    LocalDate ld = LocalDate.now();
 	    String x = "\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+
+//	    String zipFilename = path + x;
 
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    ZipOutputStream zos = new ZipOutputStream(baos);
