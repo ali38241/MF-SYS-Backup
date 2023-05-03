@@ -124,9 +124,6 @@ public class AppService {
 	}
 //	----------------------Show backup on disk---------------------
 	public Map<String, List<String>> showBackup(String date) {
-	    String inputDir = backupFolderName;
-	    int index = inputDir.indexOf("_");
-	    String subStr = inputDir.substring(0, index);
 	    File directory = new File(backPath);
 	    Map<String, List<String>> map = new HashMap<>();
 
@@ -142,7 +139,7 @@ public class AppService {
 	    }
 
 	    for (File file : contents) {
-	        if (file.isDirectory() && file.getName().startsWith(subStr)) {
+	        if (file.isDirectory() && file.getName().startsWith(date)) {
 	            List<String> backupList = new ArrayList<>();
 	            File[] subDirectories = file.listFiles();
 	            for (File subDirectory : subDirectories) {
