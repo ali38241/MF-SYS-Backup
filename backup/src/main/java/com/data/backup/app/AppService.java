@@ -38,7 +38,7 @@ public class AppService {
 	String host = "localhost";
 	int port = 27017;
 	String backPath = "C:\\Users\\mmghh\\OneDrive\\Desktop\\Backup\\MongoBackup";
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy__HH-mm-ss");
+	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
 	LocalDateTime date = LocalDateTime.now();
 	String backupFolderName = dtf.format(date);
 	String backupFolderPath = backPath + "\\" + backupFolderName;
@@ -358,6 +358,7 @@ public class AppService {
 	    os.flush();
 	    os.close();
 	}
+	
 //	-------------------------- Show All backup Databases----------
 	
 
@@ -384,12 +385,6 @@ public class AppService {
 	        map.put("Database", backupFileNames);
 	        return map;
 	    }
-	    
-
-	
-
-
-
 }
 	
 	
