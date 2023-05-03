@@ -209,8 +209,8 @@ public class AppService {
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup";
-	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
-	LocalDate sqldate = LocalDate.now();
+	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
+	LocalDateTime sqldate = LocalDateTime.now();
 	String sqlbackUpFolderName = sqldtf.format(sqldate);
 	String path = outputfile + "\\" + sqlbackUpFolderName;
 	File sqlbackupFolder = new File(path);
@@ -309,6 +309,7 @@ public class AppService {
 
 	
 //	--------------------------Zip files-------------------
+	
 	public void createzipfile(List<String> filenames) throws IOException {
 	    byte[] buffer = new byte[1024];
 	    boolean hasFile = false;
@@ -325,7 +326,9 @@ public class AppService {
 	    }
 	    LocalDate ld = LocalDate.now();
 	    String x = "\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+
 //	    String zipFilename = path + x;
+
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    ZipOutputStream zos = new ZipOutputStream(baos);
 	    for (String filename : filenames) {
@@ -360,31 +363,35 @@ public class AppService {
 	}
 	
 //	-------------------------- Show All backup Databases----------
-	
-
-
-	    public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
-	        File folder = new File(outputfile +"//"+ foldername);
-	        if (!folder.exists()) {
-	            throw new FileNotFoundException("Folder " + foldername + " does not exist");
-	        }
-	        File[] files = folder.listFiles();
-	        if (files == null) {
-	            throw new FileNotFoundException("No files found in folder " + foldername);
-	        }
-	        List<String> backupFileNames = new ArrayList<>();
-	        for (File file : files) {
-	            if (file.isFile()) {
-	                backupFileNames.add(file.getName());
+	  
+	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
+	    Map<String, List<String>> map = new HashMap<>();
+	    File folder = new File(outputfile); 
+	    if (!folder.exists()) {
+	        throw new FileNotFoundException("Folder " + foldername + " does not exist");
+	    }
+	    File[] dateFolders = folder.listFiles();
+	    if (dateFolders == null) {
+	        throw new FileNotFoundException("No folders found in folder " + foldername);
+	    }
+	    for (File dateFolder : dateFolders) {
+	        if (dateFolder.isDirectory() && dateFolder.getName().startsWith(foldername)) {
+	            File[] backupFiles = dateFolder.listFiles();
+	            if (backupFiles != null) {
+	                List<String> backupFileNames = new ArrayList<>();
+	                for (File backupFile : backupFiles) {
+	                    backupFileNames.add(backupFile.getName());
+	                }
+	                map.put(dateFolder.getName(), backupFileNames);
 	            }
 	        }
-	        if (backupFileNames.isEmpty()) {
-	            throw new FileNotFoundException("No backup files found in folder " + foldername);
-	        }
-	        Map<String, List<String>> map = new HashMap<>();
-	        map.put("Database", backupFileNames);
-	        return map;
 	    }
+	    if (map.isEmpty()) {
+	        throw new FileNotFoundException("No backup files found in folder " + foldername);
+	    }
+	    return map;
+	}
+
 }
 	
 	
