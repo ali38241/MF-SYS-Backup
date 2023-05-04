@@ -4,6 +4,7 @@ package com.data.backup.app;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -70,9 +71,9 @@ public class AppController {
 	
 //	----------------------------------------- Restore DataBase----------------------------------
 	
-	@PostMapping("/sql/restore/{dbname}")
-	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
-		boolean success = appService.restoreDatabase(dbname);
+	@PostMapping("/sql/restore/{date}/{dbname}")
+	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
+		boolean success = appService.restoreDatabase(date,dbname);
 		if(success) {
 			return ResponseEntity.ok("restore created successfully");
 		}else {
@@ -93,17 +94,10 @@ public class AppController {
 	 
 	 
 	 
-	 @GetMapping("/sql/createzip/{filenames}")
-	 public void createzipfiles(@PathVariable List<String> filenames) throws IOException{
-		 appService.createzipfile(filenames);
+	 @GetMapping("/sql/createzip/{date}/{filenames}")
+	 public void createzipfiles(@PathVariable String date,@PathVariable List<String> filenames) throws IOException{
+		 appService.createzipfile(date,filenames);
 		 
-//		 boolean success = appService.createzipfile(filenames);
-//		 if(success) {
-//			 return ResponseEntity.ok("Zip file created successfully");
-			 
-//		 }else {
-//			 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating zip file");
-//		 }
 	 }
 	 
 	 
@@ -115,7 +109,9 @@ public class AppController {
 	         Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	         return ResponseEntity.ok(backupFileNames);
 	     } catch (FileNotFoundException e) {
-	         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+	    	 String message =  "folder " + foldername + " does not exist";
+	    	 List<String> errormessage = Collections.singletonList(message);
+	         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", errormessage));
 	     } catch (Exception e) {
 	         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 	     }

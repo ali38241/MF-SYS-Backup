@@ -209,11 +209,29 @@ public class AppService {
 	private String dbusername = "root";
 	private String dbpassword = "root";
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup";
-	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
-	LocalDateTime sqldate = LocalDateTime.now();
-	String sqlbackUpFolderName = sqldtf.format(sqldate);
-	String path = outputfile + "\\" + sqlbackUpFolderName;
-	File sqlbackupFolder = new File(path);
+//	private String outputPath = System.getProperty("user.home")+File.separator+"Downloads"+File.separator+"sqlbackup";
+	String sqlbackUpFolderName ;
+//	String path = outputfile + "\\" + sqlbackUpFolderName;
+	File sqlBackupFolder ;
+	
+	public String getCurrentDateTime() {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
+		LocalDateTime dateTime = LocalDateTime.now();
+		return formatter.format(dateTime);
+	}
+	
+	public Boolean backupFolderName() {
+		sqlbackUpFolderName = getCurrentDateTime();
+		String path = outputfile + File.separator + sqlbackUpFolderName;
+		sqlBackupFolder = new File(path);
+		
+		if(!sqlBackupFolder.exists()) {
+			sqlBackupFolder.mkdir();
+			return false;
+		}else {
+			return true;
+		}
+	}
 	
 	
 //	------------------------------ backup databses-------------------------//
@@ -221,25 +239,24 @@ public class AppService {
 	public List<Map<String, String>> backupDatabase(List<String> dbname) throws IOException, InterruptedException{
 			boolean i = false;
 		    List<Map<String, String>> backupList = new ArrayList<>();
-			boolean success = sqlbackupFolder.mkdir();
-			if(!success) {
-				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
+			if(backupFolderName()) {
+				System.out.println("folder already exist with name: " + getCurrentDateTime());
 			}else {
-				System.out.println("folder created successfully with name:" + sqlbackUpFolderName);
+				System.out.println("folder created successfully with name:" + getCurrentDateTime());
 			}
 			for(String x: dbname) {
-				String outputfilename = path + x + ".sql";
+				String outputfilename = outputfile+File.separator + x + ".sql";
 				File filename = new File(outputfilename);
 				if(filename.exists()) {
 					System.out.println(outputfilename +" already exists");
 				}else {
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-					dbusername, dbpassword, x, path+"\\"+x+".sql");
+					dbusername, dbpassword, x, outputfile+ File.separator + sqlbackUpFolderName +"\\"+ x +".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
             Map<String, String> map = new HashMap<>();
 			map.put("database", x);
-			map.put("Date", sqlbackUpFolderName);
+			map.put("Date", getCurrentDateTime());
 			i = process.exitValue()==0;
 			if (i) {
 				System.out.println("Backup Created successfully for: " + x);
@@ -256,12 +273,12 @@ public class AppService {
 	
 //	-----------------------------------restore databases----------------------
 	
-	public boolean restoreDatabase(ArrayList<String> dbname) throws IOException, InterruptedException{
+	public boolean restoreDatabase(String date ,ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean i = false;
 		for(String x: dbname) {
 			
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-					dbusername, dbpassword, path+"\\"+x+".sql");
+					dbusername, dbpassword, outputfile+ File.separator + date +File.separator +x+".sql");
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue()==0;
@@ -310,11 +327,11 @@ public class AppService {
 	
 //	--------------------------Zip files-------------------
 	
-	public void createzipfile(List<String> filenames) throws IOException {
+	public void createzipfile(String date,List<String> filenames) throws IOException {
 	    byte[] buffer = new byte[1024];
 	    boolean hasFile = false;
 	    for (String filename : filenames) {
-	        File file = new File(path + "\\" + filename + ".sql");
+	        File file = new File(outputfile+File.separator+ date + File.separator + filename + ".sql");
 	        if (file.exists()) {
 	            hasFile = true;
 	            break;
@@ -327,12 +344,10 @@ public class AppService {
 	    LocalDate ld = LocalDate.now();
 	    String x = "\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
 
-//	    String zipFilename = path + x;
-
 	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	    ZipOutputStream zos = new ZipOutputStream(baos);
 	    for (String filename : filenames) {
-	        File file = new File(path + "\\" + filename + ".sql");
+	        File file = new File(outputfile + File.separator + date + "\\" + filename + ".sql");
 	        if (file.exists()) {
 	            FileInputStream fis = new FileInputStream(file);
 	            zos.putNextEntry(new ZipEntry(filename + ".sql"));
