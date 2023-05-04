@@ -1,6 +1,5 @@
 package com.data.backup.app;
 
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,106 +19,97 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @CrossOrigin("*")
 public class AppController {
-	
 
 	private AppService appService;
-	
+
 	public AppController(AppService appService) {
 		this.appService = appService;
 	}
-	
-	
+
 	@GetMapping("/mongo/backup/{dbName}")
 	public List<Map<String, String>> backUpMultiple(@PathVariable ArrayList<String> dbName) {
 		return appService.backup(dbName);
 	}
-	
-	@GetMapping("/mongo/restore/{dbName}")
-	public void restoreMulti(@PathVariable ArrayList<String> dbName) {
-		appService.restore(dbName);
+
+	@GetMapping("/mongo/restore/{date}/{dbName}")
+	public String restore(@PathVariable String date, @PathVariable ArrayList<String> dbName) {
+		return appService.restore(date, dbName);
 	}
-	
+
 	@GetMapping("/mongo/showAll")
 	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
-	@GetMapping("/mongo/showBackup/{date}")
-		public Map<String, List<String>> showBackup(@PathVariable String date){
-			return appService.showBackup(date);
-		}
 
-	@GetMapping("/mongo/zip/{dbName}")
-	public String zip(@PathVariable List<String> dbName) throws IOException {
-		return appService.zip(dbName);
+	@GetMapping("/mongo/showBackup/{date}")
+	public Map<String, List<String>> showBackup(@PathVariable String date) {
+		return appService.showBackup(date);
+	}
+
+	@GetMapping("/mongo/zip/{date}/{dbName}")
+	public String zip(@PathVariable String date,@PathVariable List<String> dbName) throws IOException {
+		return appService.zip(date, dbName);
 //		appService.createzipfile(dbName);
 	}
 
 //---------------------MYSQL-----------------------------------
-	
+
 //	----------------------Backup DataBase----------------------
-	
+
 	@GetMapping("/sql/getbackup/{dbname}")
 	public List<Map<String, String>> backupDatabase(@PathVariable List<String> dbname)
 			throws IOException, InterruptedException {
 		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
 	}
-	
-	
+
 //	----------------------------------------- Restore DataBase----------------------------------
-	
+
 	@PostMapping("/sql/restore/{dbname}")
-	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
+	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname)
+			throws IOException, InterruptedException {
 		boolean success = appService.restoreDatabase(dbname);
-		if(success) {
+		if (success) {
 			return ResponseEntity.ok("restore created successfully");
-		}else {
+		} else {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
 		}
 	}
-	
-	
+
 //	----------------------------------View All DataBases---------------------
-	
-	 @GetMapping("/sql/alldatabases")
-		public Map<Integer, String> showall() {
-	        Map<Integer, String> result = appService.viewall();
-			return result;
-	    }
-	 
+
+	@GetMapping("/sql/alldatabases")
+	public Map<Integer, String> showall() {
+		Map<Integer, String> result = appService.viewall();
+		return result;
+	}
+
 //	 ---------------------------zipping files----------------
-	 
-	 
-	 
-	 @GetMapping("/sql/createzip/{filenames}")
-	 public void createzipfiles(@PathVariable List<String> filenames) throws IOException{
-		 appService.createzipfile(filenames);
-		 
+
+	@GetMapping("/sql/createzip/{filenames}")
+	public void createzipfiles(@PathVariable List<String> filenames) throws IOException {
+		appService.createzipfile(filenames);
+
 //		 boolean success = appService.createzipfile(filenames);
 //		 if(success) {
 //			 return ResponseEntity.ok("Zip file created successfully");
-			 
+
 //		 }else {
 //			 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating zip file");
 //		 }
-	 }
-	 
-	 
+	}
+
 //	 ----------------------------- Show All Backup DataBases-----------------
-	 
-	 @GetMapping("/sql/showBackupFiles/{foldername}")
-	 public ResponseEntity<Map<String, List<String>>> getBackupFileNames(@PathVariable String foldername) {
-	     try {
-	         Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
-	         return ResponseEntity.ok(backupFileNames);
-	     } catch (FileNotFoundException e) {
-	         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-	     } catch (Exception e) {
-	         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-	     }
-	 }
+
+	@GetMapping("/sql/showBackupFiles/{foldername}")
+	public ResponseEntity<Map<String, List<String>>> getBackupFileNames(@PathVariable String foldername) {
+		try {
+			Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
+			return ResponseEntity.ok(backupFileNames);
+		} catch (FileNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
 }
-
-
-	 
-
