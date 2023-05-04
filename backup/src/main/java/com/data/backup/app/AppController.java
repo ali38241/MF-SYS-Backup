@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,8 +29,13 @@ public class AppController {
 	}
 
 	@GetMapping("/mongo/backup/{dbName}")
+<<<<<<< Updated upstream
 	public List<Map<String, String>> backUpMultiple(@PathVariable ArrayList<String> dbName) {
 		return appService.backup(dbName);
+=======
+	public void backUpMultiple(@PathVariable ArrayList<String> dbName)  {
+		appService.backup(dbName);
+>>>>>>> Stashed changes
 	}
 
 	@GetMapping("/mongo/restore/{date}/{dbName}")
@@ -54,6 +60,7 @@ public class AppController {
 	}
 
 //---------------------MYSQL-----------------------------------
+<<<<<<< Updated upstream
 
 //	----------------------Backup DataBase----------------------
 
@@ -62,14 +69,29 @@ public class AppController {
 			throws IOException, InterruptedException {
 		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
+=======
+	
+//	-----------------------Database Backup ----------------------
+	
+	@GetMapping("/sql/getbackup/{dbname}")
+	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
+		return appService.backupDatabase(dbname);
+>>>>>>> Stashed changes
 	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
 
 	
+<<<<<<< Updated upstream
 	@PostMapping("/sql/restore/{date}/{dbname}")
 	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean success = appService.restoreDatabase(date,dbname);
+=======
+//	------------------------- Database Restore-------------------
+	@PostMapping("/sql/restore/{dbname}")
+	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
+		boolean success = appService.restoreDatabase(dbname);
+>>>>>>> Stashed changes
 		if(success) {
 
 
@@ -84,6 +106,7 @@ public class AppController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
 		}
 	}
+<<<<<<< Updated upstream
 
 //	----------------------------------View All DataBases---------------------
 
@@ -95,6 +118,17 @@ public class AppController {
 
 //	 ---------------------------zipping files----------------
 
+=======
+	
+//	-------------------------- Showing all Databases--------------------
+	 @GetMapping("/sql/alldatabases")
+		public Map<Integer, String> showall() {
+	        Map<Integer, String> result = appService.viewall();
+			return result;
+	    }
+	 
+//	 ---------------------------Database Zip files----------------
+>>>>>>> Stashed changes
 	 
 	 
 	 

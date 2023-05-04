@@ -235,6 +235,7 @@ public class AppService {
 
 	private String dbusername = "root";
 	private String dbpassword = "root";
+<<<<<<< Updated upstream
 
 	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup";
 //	private String outputPath = System.getProperty("user.home")+File.separator+"Downloads"+File.separator+"sqlbackup";
@@ -260,15 +261,30 @@ public class AppService {
 			return true;
 		}
 	}
+=======
+	private String outputfile = "C:\\Users\\Windows\\Desktop\\mysqlbackup";
+	DateTimeFormatter sqldtf = DateTimeFormatter.ofPattern("dd-MM-YYYY");
+	LocalDate sqldate = LocalDate.now();
+	String sqlbackUpFolderName = sqldtf.format(sqldate);
+	String path = outputfile + "\\" + sqlbackUpFolderName;
+	File sqlbackupFolder = new File(path);
+>>>>>>> Stashed changes
 	
 	
 //	------------------------------ backup databses-------------------------//
 
 	public List<Map<String, String>> backupDatabase(List<String> dbname) throws IOException, InterruptedException{
 			boolean i = false;
+<<<<<<< Updated upstream
 		    List<Map<String, String>> backupList = new ArrayList<>();
 			if(backupFolderName()) {
 				System.out.println("folder already exist with name: " + getCurrentDateTime());
+=======
+			Map<String, String> map = new HashMap<>();
+			boolean success = sqlbackupFolder.mkdir();
+			if(!success) {
+				System.out.println("folder already exist with name: " + sqlbackUpFolderName);
+>>>>>>> Stashed changes
 			}else {
 				System.out.println("folder created successfully with name:" + getCurrentDateTime());
 			}
@@ -346,6 +362,7 @@ public class AppService {
 		for(String x: dbname) {
 			
 			String command = String.format("\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
+<<<<<<< Updated upstream
 					dbusername, dbpassword, outputfile+ File.separator + date +File.separator +x+".sql");
 
 
@@ -356,6 +373,9 @@ public class AppService {
 					"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
 					dbusername, dbpassword, path + File.separator + x + ".sql");
 
+=======
+					dbusername, dbpassword, path+"\\" +x+".sql");
+>>>>>>> Stashed changes
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue() == 0;
@@ -395,6 +415,20 @@ public class AppService {
 	}
 
 //	--------------------------Zip files-------------------
+<<<<<<< Updated upstream
+=======
+	
+	
+	
+	public boolean createzipfile(List<String> filenames) throws IOException {
+	    File zipFolderFile = new File(path);
+	    if (!zipFolderFile.exists()) {
+	        zipFolderFile.mkdirs();
+	    }
+
+	    LocalDate ld = LocalDate.now();
+	    String zipFilename = path +"\\"+ "backup_" + ld.toString() + "_" + System.currentTimeMillis() + ".zip";
+>>>>>>> Stashed changes
 
 	
 	public void createzipfile(String date,List<String> filenames) throws IOException {
