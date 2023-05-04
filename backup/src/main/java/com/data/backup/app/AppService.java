@@ -349,7 +349,7 @@ public class AppService {
 		return result;
 	}
 
-//	--------------------------Zip files-------------------
+//	--------------------------Zip files sql-------------------
 	public void createzipfile(String date, List<String> filenames) throws IOException {
 		byte[] buffer = new byte[1024];
 		boolean hasFile = false;
