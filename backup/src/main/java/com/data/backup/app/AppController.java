@@ -29,15 +29,9 @@ public class AppController {
 	}
 
 	@GetMapping("/mongo/backup/{dbName}")
-<<<<<<< Updated upstream
 	public List<Map<String, String>> backUpMultiple(@PathVariable ArrayList<String> dbName) {
 		return appService.backup(dbName);
-=======
-	public void backUpMultiple(@PathVariable ArrayList<String> dbName)  {
-		appService.backup(dbName);
->>>>>>> Stashed changes
 	}
-
 	@GetMapping("/mongo/restore/{date}/{dbName}")
 	public String restore(@PathVariable String date, @PathVariable ArrayList<String> dbName) {
 		return appService.restore(date, dbName);
@@ -60,7 +54,7 @@ public class AppController {
 	}
 
 //---------------------MYSQL-----------------------------------
-<<<<<<< Updated upstream
+
 
 //	----------------------Backup DataBase----------------------
 
@@ -69,56 +63,30 @@ public class AppController {
 			throws IOException, InterruptedException {
 		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
-=======
-	
-//	-----------------------Database Backup ----------------------
-	
-	@GetMapping("/sql/getbackup/{dbname}")
-	public Map<String, String> backupDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
-		return appService.backupDatabase(dbname);
->>>>>>> Stashed changes
+
 	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
 
 	
-<<<<<<< Updated upstream
+
 	@PostMapping("/sql/restore/{date}/{dbname}")
 	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean success = appService.restoreDatabase(date,dbname);
-=======
-//	------------------------- Database Restore-------------------
-	@PostMapping("/sql/restore/{dbname}")
-	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
-		boolean success = appService.restoreDatabase(dbname);
->>>>>>> Stashed changes
 		if(success) {
-
-
-	@PostMapping("/sql/restore/{dbname}")
-	public ResponseEntity<String> restoreDatabase(@PathVariable ArrayList<String> dbname)
-			throws IOException, InterruptedException {
-		boolean success = appService.restoreDatabase(dbname);
-		if (success) {
-
 			return ResponseEntity.ok("restore created successfully");
 		} else {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
 		}
 	}
-<<<<<<< Updated upstream
+
 
 //	----------------------------------View All DataBases---------------------
 
-	@GetMapping("/sql/alldatabases")
-	public Map<Integer, String> showall() {
-		Map<Integer, String> result = appService.viewall();
-		return result;
-	}
+
 
 //	 ---------------------------zipping files----------------
 
-=======
 	
 //	-------------------------- Showing all Databases--------------------
 	 @GetMapping("/sql/alldatabases")
@@ -128,7 +96,7 @@ public class AppController {
 	    }
 	 
 //	 ---------------------------Database Zip files----------------
->>>>>>> Stashed changes
+
 	 
 	 
 	 
@@ -154,32 +122,10 @@ public class AppController {
 	         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 	     }
 	 }
-
-
-	@GetMapping("/sql/createzip/{filenames}")
-	public void createzipfiles(@PathVariable List<String> filenames) throws IOException {
-		appService.createzipfile(filenames);
-
-//		 boolean success = appService.createzipfile(filenames);
-//		 if(success) {
-//			 return ResponseEntity.ok("Zip file created successfully");
-
-//		 }else {
-//			 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating zip file");
-//		 }
+		
 	}
 
 //	 ----------------------------- Show All Backup DataBases-----------------
 
-	@GetMapping("/sql/showBackupFiles/{foldername}")
-	public ResponseEntity<Map<String, List<String>>> getBackupFileNames(@PathVariable String foldername) {
-		try {
-			Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
-			return ResponseEntity.ok(backupFileNames);
-		} catch (FileNotFoundException e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-		}
-	}
-}
+	
+
