@@ -230,8 +230,6 @@ public class AppService {
 	}
 //-------------------------------////MYSQL////----------------------------------------//
 
-	// -----------------------------SQL-------------------------//
-
 	private String dbusername = "root";
 	private String dbpassword = "root";
 
@@ -304,8 +302,6 @@ public class AppService {
 
 		}
 	
-
-//	------------------------------ backup databses-------------------------//
 
 //	-----------------------------------restore databases----------------------
 
