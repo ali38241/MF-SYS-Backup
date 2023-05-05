@@ -68,8 +68,6 @@ public class AppController {
 
 //	----------------------------------------- Restore DataBase----------------------------------
 
-	
-
 	@PostMapping("/sql/restore/{date}/{dbname}")
 	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean success = appService.restoreDatabase(date,dbname);
@@ -80,13 +78,6 @@ public class AppController {
 		}
 	}
 
-
-//	----------------------------------View All DataBases---------------------
-
-
-
-//	 ---------------------------zipping files----------------
-
 	
 //	-------------------------- Showing all Databases--------------------
 	 @GetMapping("/sql/alldatabases")
@@ -96,9 +87,6 @@ public class AppController {
 	    }
 	 
 //	 ---------------------------Database Zip files----------------
-
-	 
-	 
 	 
 	 @GetMapping("/sql/createzip/{date}/{filenames}")
 	 public void createzipfiles(@PathVariable String date,@PathVariable List<String> filenames) throws IOException{
@@ -125,7 +113,6 @@ public class AppController {
 		
 	}
 
-//	 ----------------------------- Show All Backup DataBases-----------------
 
 	
 

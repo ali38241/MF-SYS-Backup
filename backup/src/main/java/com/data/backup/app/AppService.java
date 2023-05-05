@@ -224,8 +224,6 @@ public class AppService {
 	}
 //-------------------------------////MYSQL////----------------------------------------//
 
-	// -----------------------------SQL-------------------------//
-
 	private String dbusername = "root";
 	private String dbpassword = "root";
 
@@ -299,8 +297,6 @@ public class AppService {
 		}
 	
 
-//	------------------------------ backup databses-------------------------//
-
 //	-----------------------------------restore databases----------------------
 
 	public boolean restoreDatabase(String date, ArrayList<String> dbname) throws IOException, InterruptedException {
@@ -347,7 +343,7 @@ public class AppService {
 		return result;
 	}
 
-//	--------------------------Zip files-------------------
+//	--------------------------Zip files sql-------------------
 	public void createzipfile(String date, List<String> filenames) throws IOException {
 		byte[] buffer = new byte[1024];
 		boolean hasFile = false;
