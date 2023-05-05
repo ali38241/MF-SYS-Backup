@@ -68,7 +68,7 @@ public class AppController {
 
 //	----------------------------------------- Restore DataBase----------------------------------
 
-	@PostMapping("/sql/restore/{date}/{dbname}")
+	@GetMapping("/sql/restore/{date}/{dbname}")
 	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
 		boolean success = appService.restoreDatabase(date,dbname);
 		if(success) {
