@@ -37,12 +37,12 @@ public class AppService {
 	private String host = "localhost";
 	int port = 27017;
 	String home = System.getProperty("user.home");
-	private String backPath = home + File.separator + "Downloads";
+	private String backupPath = home + File.separator + "Downloads";
 	private String backupFolderName;
 	private String backupFolderPath;
 	private File backupFolder;
 	String status = "";
-
+	
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
 		return dtf.format(LocalDateTime.now());
@@ -51,11 +51,11 @@ public class AppService {
 	public Boolean createBackupFolder() {
 
 		backupFolderName = getBackupName();
-		backupFolderPath = backPath + "\\Backup\\Mongo" + File.separator + backupFolderName;
+		backupFolderPath = backupPath + "\\Backup\\Mongo" + File.separator + backupFolderName;
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
 			backupFolder.mkdir();
-			status = "Created folder \\Backup\\Mongo in " + backPath;
+			status = "Created folder \\Backup\\Mongo in " + backupPath;
 			return true;
 		}
 		return false;
@@ -67,20 +67,14 @@ public class AppService {
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
 			System.out.println(status);
+		}else {
+			System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
 		}
 
 		for (String db : dbName) {
 			Map<String, String> map = new HashMap<>();
 			map.put("Database", db);
 			map.put("Date", backupFolderName);
-			File backupFile = new File(backupFolderPath + File.separator + db);
-			if (backupFile.exists()) {
-				String message = String.format(
-						"A backup for database \"%s\" already exists at \"%s\". Updating Backup.", db,
-						backupFolderPath);
-
-				System.out.println(message);
-			}
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--db", db, "--host", host, "--port",
 					String.valueOf(port), "--out", backupFolderPath);
 
@@ -106,7 +100,7 @@ public class AppService {
 
 	// -----------------------------Restore Mongo Databases----------------------
 	public String restore(String date, ArrayList<String> dbName) {
-		String path = backPath + "\\Backup\\Mongo" + File.separator + date;
+		String path = backupPath + "\\Backup\\Mongo" + File.separator + date;
 		String result = "";
 		File file = new File(path);
 		if (file.exists()) {
@@ -130,7 +124,7 @@ public class AppService {
 			return result;
 
 		} else {
-			return (date + " doesn't exists in " + backPath);
+			return (date + " doesn't exists in " + backupPath);
 		}
 	}
 
@@ -150,7 +144,7 @@ public class AppService {
 
 //	----------------------Show backup on disk---------------------
 	public Map<String, List<String>> showBackup(String date) {
-		File directory = new File(backPath + "\\Backup\\Mongo");
+		File directory = new File(backupPath + "\\Backup\\Mongo");
 		Map<String, List<String>> map = new HashMap<>();
 
 		if (!directory.exists() || !directory.isDirectory()) {
@@ -193,7 +187,7 @@ public class AppService {
 		ZipOutputStream zos = new ZipOutputStream(baos);
 		for (String folderName : folderNames) {
 			File directory = new File(
-					backPath + "\\Backup\\Mongo" + File.separator + date + File.separator + folderName);
+					backupPath + "\\Backup\\Mongo" + File.separator + date + File.separator + folderName);
 			if (directory.isDirectory()) {
 				for (File file : directory.listFiles()) {
 					System.out.println("Adding file " + file.getName() + " to zip");
@@ -208,7 +202,7 @@ public class AppService {
 				}
 			} else {
 				throw new IllegalArgumentException(
-						backPath + "\\Backup\\Mongo" + File.separator + folderName + " Does not exists.");
+						backupPath + "\\Backup\\Mongo" + File.separator + folderName + " Does not exists.");
 			}
 		}
 		zos.close();
@@ -226,7 +220,7 @@ public class AppService {
 		sos.flush();
 		sos.close();
 
-		return ("Created zip file: " + backPath + ".zip \n" + "Files added to the zip: " + folderNames);
+		return ("Created zip file: " + backupPath + ".zip \n" + "Files added to the zip: " + folderNames);
 	}
 //-------------------------------////MYSQL////----------------------------------------//
 
