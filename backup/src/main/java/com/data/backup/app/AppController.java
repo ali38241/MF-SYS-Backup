@@ -59,8 +59,7 @@ public class AppController {
 //	----------------------Backup DataBase----------------------
 
 	@GetMapping("/sql/getbackup/{dbname}")
-	public List<Map<String, String>> backupDatabase(@PathVariable List<String> dbname)
-			throws IOException, InterruptedException {
+	public List<Map<String, String>> backupDatabase(@PathVariable List<String> dbname) {
 		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
 
@@ -88,9 +87,9 @@ public class AppController {
 	 
 //	 ---------------------------Database Zip files----------------
 	 
-	 @GetMapping("/sql/createzip/{date}/{filenames}")
-	 public void createzipfiles(@PathVariable String date,@PathVariable List<String> filenames) throws IOException{
-		 appService.createzipfile(date,filenames);
+	 @GetMapping("/sql/createzip/{date}")
+	 public void createzipfiles(@PathVariable String date) throws IOException{
+		 appService.createzipfile(date);
 		 
 	 }
 	 
