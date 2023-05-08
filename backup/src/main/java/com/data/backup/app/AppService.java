@@ -341,39 +341,7 @@ public class AppService {
 	}
 
 //	--------------------------Zip files sql-------------------
-//	public void createzipfile(String date) throws IOException {
-//		byte[] buffer = new byte[1024];
-//
-//		String x = "\\" + "backup_" + "_" + date + ".zip";
-//
-//		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//		ZipOutputStream zos = new ZipOutputStream(baos);
-//		File file = new File(backupPath + "\\Backup\\Mysql" + File.separator + date);
-//
-//		FileInputStream fis = new FileInputStream(file);
-//		zos.putNextEntry(new ZipEntry(date));
-//		int length;
-//		while ((length = fis.read(buffer)) > 0) {
-//			zos.write(buffer, 0, length);
-//		}
-//		zos.closeEntry();
-//		fis.close();
-//
-//		zos.close();
-//		byte[] zipBytes = baos.toByteArray();
-//		baos.close();
-//		HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-//				.getResponse();
-//
-//		response.setContentType("application/zip");
-//		response.setHeader("Content-Disposition", "attachment; filename=\"" + x + "\"");
-//		response.setContentLength(zipBytes.length);
-//
-//		OutputStream os = response.getOutputStream();
-//		os.write(zipBytes);
-//		os.flush();
-//		os.close();
-//	}
+
 	public void createzipfile(String date) throws IOException {
 	    byte[] buffer = new byte[1024];
 
@@ -416,7 +384,7 @@ public class AppService {
 	    os.close();
 	}
 
-//	-------------------------- Show All backup Databases----------
+//	-------------------------- Show All backup Databases-----------------
 
 	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
 		Map<String, List<String>> map = new HashMap<>();
