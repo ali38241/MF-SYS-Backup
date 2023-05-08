@@ -261,35 +261,6 @@ public class AppService {
 	public List<Map<String, String>> backupDatabase(List<String> dbname) {
 		boolean i = false;
 		List<Map<String, String>> backupList = new ArrayList<>();
-		if (backupFolderName()) {
-			System.out.println("folder created successfully with name:" + sqlbackUpFolderName + " in " + path);
-
-		} else {
-			System.out.println("folder already exist with name: " + sqlbackUpFolderName + " in " + path);
-		}
-		for (String x : dbname) {
-			String backupPathname = path + File.separator + x + ".sql";
-			File filename = new File(backupPathname);
-			if (filename.exists()) {
-				System.out.println(backupPathname + " already exists");
-			} else {
-				String command = String.format(
-						"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-						dbusername, dbpassword, x, path + File.separator + x + ".sql");
-				Process process = Runtime.getRuntime().exec(command);
-				process.waitFor();
-				Map<String, String> map = new HashMap<>();
-				map.put("database", x);
-				map.put("Date", getCurrentDateTime());
-				i = process.exitValue() == 0;
-				if (i) {
-					System.out.println("Backup Created successfully for: " + x);
-				} else {
-					System.out.println("Error creating backup");
-				}
-				backupList.add(map);
-			}
-		}
 		try {
 			if (backupFolderName()) {
 				System.out.println("folder created successfully with name:" + sqlbackUpFolderName + " in " + path);
