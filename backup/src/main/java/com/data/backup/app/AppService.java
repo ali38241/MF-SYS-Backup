@@ -212,13 +212,11 @@ public class AppService {
 		zos.close();
 		baos.close();
 
-		// Set the response headers
 		HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
 				.getResponse();
 		response.setContentType("application/zip");
 		response.setHeader("Content-Disposition", "attachment; filename=\"" + date + ".zip\"");
 
-		// Write the content of the generated zip file to the response output stream
 		ServletOutputStream sos = response.getOutputStream();
 		sos.write(baos.toByteArray());
 		sos.flush();
@@ -300,8 +298,9 @@ public class AppService {
 
 //	-----------------------------------restore databases----------------------
 
-	public boolean restoreDatabase(String date, ArrayList<String> dbname) throws IOException, InterruptedException {
+	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
 		boolean i = false;
+		try {
 		for (String x : dbname) {
 			String command = String.format(
 					"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
@@ -310,6 +309,9 @@ public class AppService {
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue() == 0;
+		}
+		}catch(Exception e){
+			System.out.println("An Error occurred While performing the backup: "+e.getMessage());
 		}
 		return i;
 	}
@@ -346,43 +348,6 @@ public class AppService {
 	}
 
 //	--------------------------Zip files sql-------------------
-
-	public void createzipfile(String date, List<String> filenames) throws IOException {
-		byte[] buffer = new byte[1024];
-		boolean hasFile = false;
-		for (String filename : filenames) {
-			File file = new File(
-					backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + filename + ".sql");
-			if (file.exists()) {
-				hasFile = true;
-				break;
-			}
-		}
-		if (!hasFile) {
-			System.out.println("No files to zip");
-			return;
-		}
-//		LocalDate ld = LocalDate.now();
-		String x = "\\" + "backup_" + "_" + date + ".zip";
-
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ZipOutputStream zos = new ZipOutputStream(baos);
-		for (String filename : filenames) {
-			File file = new File(backupPath + "\\Backup\\Mysql" + File.separator + date + "\\" + filename + ".sql");
-			if (file.exists()) {
-				FileInputStream fis = new FileInputStream(file);
-				zos.putNextEntry(new ZipEntry(filename + ".sql"));
-				int length;
-				while ((length = fis.read(buffer)) > 0) {
-					zos.write(buffer, 0, length);
-				}
-				zos.closeEntry();
-				fis.close();
-			} else {
-				System.out.println("File " + filename + ".sql" + " does not exist");
-			}
-		}
-	}
 
 	public void createzipfile(String date) throws IOException {
 	    byte[] buffer = new byte[1024];
@@ -429,31 +394,30 @@ public class AppService {
 //	-------------------------- Show All backup Databases-----------------
 
 	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
-		Map<String, List<String>> map = new HashMap<>();
-		File folder = new File(backupPath + "\\Backup\\Mysql");
-		if (!folder.exists()) {
-			throw new FileNotFoundException("Folder " + foldername + " does not exist");
-		}
-		File[] dateFolders = folder.listFiles();
-		if (dateFolders == null) {
-			throw new FileNotFoundException("No folders found in folder " + foldername);
-		}
-		for (File dateFolder : dateFolders) {
-			if (dateFolder.isDirectory() && dateFolder.getName().startsWith(foldername)) {
-				File[] backupFiles = dateFolder.listFiles();
-				if (backupFiles != null) {
-					List<String> backupFileNames = new ArrayList<>();
-					for (File backupFile : backupFiles) {
-						backupFileNames.add(backupFile.getName());
-					}
-					map.put(dateFolder.getName(), backupFileNames);
-				}
-			}
-		}
-		if (map.isEmpty()) {
-			throw new FileNotFoundException("No backup files found in folder " + foldername);
-		}
-		return map;
+	    Map<String, List<String>> map = new HashMap<>();
+	    File folder = new File(backupPath + "\\Backup\\Mysql");
+	    if (!folder.exists()) {
+	        throw new FileNotFoundException("Folder " + foldername + " does not exist");
+	    }
+	    File[] dateFolders = folder.listFiles();
+	    if (dateFolders == null) {
+	        throw new FileNotFoundException("No folders found in folder " + foldername);
+	    }
+	    for (File dateFolder : dateFolders) {
+	        if (dateFolder.isDirectory() && dateFolder.getName().startsWith(foldername)) {
+	            File[] backupFiles = dateFolder.listFiles();
+	            if (backupFiles != null) {
+	                List<String> backupFileNames = new ArrayList<>();
+	                for (File backupFile : backupFiles) {
+	                    backupFileNames.add(backupFile.getName());
+	                }
+	                map.put(dateFolder.getName(), backupFileNames);
+	            }
+	        }
+	    }
+	    if (map.isEmpty()) {
+	        throw new FileNotFoundException("No backup files found in folder " + foldername);
+	    }
+	    return map;
 	}
-
 }

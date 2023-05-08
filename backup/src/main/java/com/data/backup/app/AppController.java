@@ -67,13 +67,16 @@ public class AppController {
 //	----------------------------------------- Restore DataBase----------------------------------
 
 	@GetMapping("/sql/restore/{date}/{dbname}")
-	public ResponseEntity<String> restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException, InterruptedException{
+	public String restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname){
 		boolean success = appService.restoreDatabase(date,dbname);
 		if(success) {
-			return ResponseEntity.ok("restore created successfully");
-		} else {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error restoring");
+			String x = "restore successfully done";
+			return x;
+			
+		}else {
+			return "Did not restore databases";
 		}
+		
 	}
 
 	
@@ -96,20 +99,11 @@ public class AppController {
 //	 ----------------------------- Show All Backup DataBases-----------------
 	 
 	 @GetMapping("/sql/showBackupFiles/{foldername}")
-	 public ResponseEntity<Map<String, List<String>>> getBackupFileNames(@PathVariable String foldername) {
-	     try {
-	         Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
-	         return ResponseEntity.ok(backupFileNames);
-	     } catch (FileNotFoundException e) {
-	    	 String message =  "folder " + foldername + " does not exist";
-	    	 List<String> errormessage = Collections.singletonList(message);
-	         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", errormessage));
-	     } catch (Exception e) {
-	         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-	     }
+	 public Map<String, List<String>> getBackupFileNames(@PathVariable String foldername) throws FileNotFoundException {
+	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
+	     return backupFileNames;
 	 }
-		
-	}
+}
 
 
 	
