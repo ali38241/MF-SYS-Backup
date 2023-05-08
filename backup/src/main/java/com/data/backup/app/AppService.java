@@ -41,6 +41,7 @@ public class AppService {
 	private String backupFolderPath;
 	private File backupFolder;
 	private String status = "";
+
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
 		return dtf.format(LocalDateTime.now());
@@ -233,7 +234,6 @@ public class AppService {
 	private File sqlBackupFolder;
 	private String path = "";
 
-
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
 		LocalDateTime dateTime = LocalDateTime.now();
@@ -255,63 +255,74 @@ public class AppService {
 	}
 
 //	------------------------------ backup databses-------------------------//
-
+	
 	public List<Map<String, String>> backupDatabase(List<String> dbname) {
-		boolean i = false;
-		List<Map<String, String>> backupList = new ArrayList<>();
-		try {
-			if (backupFolderName()) {
-				System.out.println("folder created successfully with name:" + sqlbackUpFolderName + " in " + path);
+	    boolean i;
+	    List<Map<String, String>> backupList = new ArrayList<>();
 
-			} else {
-				System.out.println("folder already exist with name: " + sqlbackUpFolderName + " in " + path);
-			}
-			for (String x : dbname) {
-				String backupPathname = path + File.separator + x ;
-				File filename = new File(backupPathname);
-				if (filename.exists()) {
-					System.out.println(backupPathname + " already exists");
-				} else {
-					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-							dbusername, dbpassword, x, path + File.separator + x );
-					Process process = Runtime.getRuntime().exec(command);
-					process.waitFor();
-					Map<String, String> map = new HashMap<>();
-					map.put("database", x);
-					map.put("Date", getCurrentDateTime());
-					i = process.exitValue() == 0;
-					if (i) {
-						System.out.println("Backup Created successfully for: " + x);
-					} else {
-						System.out.println("Error creating backup");
-					}
-					backupList.add(map);
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("An Error occurred while performing the Backup: " + e.getMessage());
-		}
-		return backupList;
+	    ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+	            "-u" + dbusername, "-p" + dbpassword, "-e", "show databases;");
+	    try {
+	        Process p = pb.start();
+	        String output = new String(p.getInputStream().readAllBytes());
+	        String[] databases = output.split("\n");
 
+	        for (String x : dbname) {
+	            boolean found = false;
+	            for (String db : databases) {
+	                if (db.trim().equals(x)) {
+	                    found = true;
+	                    break;
+	                }
+	            }
+	            if (found) {
+	                if (backupFolderName()) {
+	                    System.out.println(
+	                            "Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
+	                }
+	                String command = String.format(
+	                        "\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
+	                        dbusername, dbpassword, x, path + File.separator + x);
+	                Process process = Runtime.getRuntime().exec(command);
+	                process.waitFor();
+	                Map<String, String> map = new HashMap<>();
+	                map.put("database", x);
+	                map.put("Date", getCurrentDateTime());
+	                i = process.exitValue() == 0;
+	                if (i) {
+	                    System.out.println("Backup created successfully for: " + x);
+	                } else {
+	                    System.out.println("Error creating backup");
+	                }
+	                backupList.add(map);
+	            } else {
+	                System.out.println("Database does not exist: " + x);
+	            }
+	        }
+	    } catch (Exception e) {
+	        System.out.println("An error occurred while performing the backup: " + e.getMessage());
+	    }
+	    return backupList;
 	}
+
+	
 
 //	-----------------------------------restore databases----------------------
 
 	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
 		boolean i = false;
 		try {
-		for (String x : dbname) {
-			String command = String.format(
-					"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-					dbusername, dbpassword,
-					backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x );
-			Process process = Runtime.getRuntime().exec(command);
-			process.waitFor();
-			i = process.exitValue() == 0;
-		}
-		}catch(Exception e){
-			System.out.println("An Error occurred While performing the backup: "+e.getMessage());
+			for (String x : dbname) {
+				String command = String.format(
+						"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
+						dbusername, dbpassword,
+						backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
+				Process process = Runtime.getRuntime().exec(command);
+				process.waitFor();
+				i = process.exitValue() == 0;
+			}
+		} catch (Exception e) {
+			System.out.println("An Error occurred While performing the backup: " + e.getMessage());
 		}
 		return i;
 	}
@@ -350,74 +361,75 @@ public class AppService {
 //	--------------------------Zip files sql-------------------
 
 	public void createzipfile(String date) throws IOException {
-	    byte[] buffer = new byte[1024];
+		byte[] buffer = new byte[1024];
 
-	    String zipFileName = "backup_" + "_" + date + ".zip";
-	    String backupFolderPath = backupPath + File.separator + "Backup" + File.separator + "Mysql" + File.separator + date;
+		String zipFileName = "backup_" + "_" + date + ".zip";
+		String backupFolderPath = backupPath + File.separator + "Backup" + File.separator + "Mysql" + File.separator
+				+ date;
 
-	    File backupFolder = new File(backupFolderPath);
-	    if (!backupFolder.exists()) {
-	        throw new FileNotFoundException("Backup folder not found for date " + date);
-	    }
+		File backupFolder = new File(backupFolderPath);
+		if (!backupFolder.exists()) {
+			throw new FileNotFoundException("Backup folder not found for date " + date);
+		}
 
-	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	    ZipOutputStream zos = new ZipOutputStream(baos);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ZipOutputStream zos = new ZipOutputStream(baos);
 
-	    File[] filesToZip = backupFolder.listFiles();
-	    for (File file : filesToZip) {
-	        FileInputStream fis = new FileInputStream(file);
-	        zos.putNextEntry(new ZipEntry(file.getName()));
-	        int length;
-	        while ((length = fis.read(buffer)) > 0) {
-	            zos.write(buffer, 0, length);
-	        }
-	        zos.closeEntry();
-	        fis.close();
-	    }
+		File[] filesToZip = backupFolder.listFiles();
+		for (File file : filesToZip) {
+			FileInputStream fis = new FileInputStream(file);
+			zos.putNextEntry(new ZipEntry(file.getName()));
+			int length;
+			while ((length = fis.read(buffer)) > 0) {
+				zos.write(buffer, 0, length);
+			}
+			zos.closeEntry();
+			fis.close();
+		}
 
-	    zos.close();
-	    byte[] zipBytes = baos.toByteArray();
-	    baos.close();
+		zos.close();
+		byte[] zipBytes = baos.toByteArray();
+		baos.close();
 
-	    HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-	            .getResponse();
-	    response.setContentType("application/zip");
-	    response.setHeader("Content-Disposition", "attachment; filename=\"" + zipFileName + "\"");
-	    response.setContentLength(zipBytes.length);
+		HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+				.getResponse();
+		response.setContentType("application/zip");
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + zipFileName + "\"");
+		response.setContentLength(zipBytes.length);
 
-	    OutputStream os = response.getOutputStream();
-	    os.write(zipBytes);
-	    os.flush();
-	    os.close();
+		OutputStream os = response.getOutputStream();
+		os.write(zipBytes);
+		os.flush();
+		os.close();
 	}
 
 //	-------------------------- Show All backup Databases-----------------
 
 	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
-	    Map<String, List<String>> map = new HashMap<>();
-	    File folder = new File(backupPath + "\\Backup\\Mysql");
-	    if (!folder.exists()) {
-	        throw new FileNotFoundException("Folder " + foldername + " does not exist");
-	    }
-	    File[] dateFolders = folder.listFiles();
-	    if (dateFolders == null) {
-	        throw new FileNotFoundException("No folders found in folder " + foldername);
-	    }
-	    for (File dateFolder : dateFolders) {
-	        if (dateFolder.isDirectory() && dateFolder.getName().startsWith(foldername)) {
-	            File[] backupFiles = dateFolder.listFiles();
-	            if (backupFiles != null) {
-	                List<String> backupFileNames = new ArrayList<>();
-	                for (File backupFile : backupFiles) {
-	                    backupFileNames.add(backupFile.getName());
-	                }
-	                map.put(dateFolder.getName(), backupFileNames);
-	            }
-	        }
-	    }
-	    if (map.isEmpty()) {
-	        throw new FileNotFoundException("No backup files found in folder " + foldername);
-	    }
-	    return map;
+		Map<String, List<String>> map = new HashMap<>();
+		File folder = new File(backupPath + "\\Backup\\Mysql");
+		if (!folder.exists()) {
+			throw new FileNotFoundException("Folder " + foldername + " does not exist");
+		}
+		File[] dateFolders = folder.listFiles();
+		if (dateFolders == null) {
+			throw new FileNotFoundException("No folders found in folder " + foldername);
+		}
+		for (File dateFolder : dateFolders) {
+			if (dateFolder.isDirectory() && dateFolder.getName().startsWith(foldername)) {
+				File[] backupFiles = dateFolder.listFiles();
+				if (backupFiles != null) {
+					List<String> backupFileNames = new ArrayList<>();
+					for (File backupFile : backupFiles) {
+						backupFileNames.add(backupFile.getName());
+					}
+					map.put(dateFolder.getName(), backupFileNames);
+				}
+			}
+		}
+		if (map.isEmpty()) {
+			throw new FileNotFoundException("No backup files found in folder " + foldername);
+		}
+		return map;
 	}
 }
