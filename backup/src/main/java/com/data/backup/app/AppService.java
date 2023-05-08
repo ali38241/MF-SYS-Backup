@@ -41,7 +41,6 @@ public class AppService {
 	private String backupFolderPath;
 	private File backupFolder;
 	private String status = "";
-
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
 		return dtf.format(LocalDateTime.now());
@@ -227,14 +226,15 @@ public class AppService {
 
 		return ("Created zip file: " + backupPath + ".zip \n" + "Files added to the zip: " + folderNames);
 	}
+
 //-------------------------------////MYSQL////----------------------------------------//
 
 	private String dbusername = "root";
 	private String dbpassword = "root";
-
-	public String sqlbackUpFolderName;
+	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
-	String path = "";
+	private String path = "";
+
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -242,7 +242,7 @@ public class AppService {
 		return formatter.format(dateTime);
 	}
 
-	public Boolean backupFolderName() {
+	private Boolean backupFolderName() {
 		sqlbackUpFolderName = getCurrentDateTime();
 		path = backupPath + File.separator + "Backup" + File.separator + "Mysql" + File.separator + sqlbackUpFolderName;
 		sqlBackupFolder = new File(path);
@@ -258,14 +258,9 @@ public class AppService {
 
 //	------------------------------ backup databses-------------------------//
 
-	public List<Map<String, String>> backupDatabase(List<String> dbname) throws IOException, InterruptedException {
+	public List<Map<String, String>> backupDatabase(List<String> dbname) {
 		boolean i = false;
 		List<Map<String, String>> backupList = new ArrayList<>();
-//		if (backupFolderName()) {
-//			System.out.println("folder already exist with name: " + getCurrentDateTime());
-//		}
-////			Map<String, String> map = new HashMap<>();
-//			boolean success = sqlBackupFolder.mkdir();
 		if (backupFolderName()) {
 			System.out.println("folder created successfully with name:" + sqlbackUpFolderName + " in " + path);
 
@@ -295,6 +290,39 @@ public class AppService {
 				backupList.add(map);
 			}
 		}
+		try {
+			if (backupFolderName()) {
+				System.out.println("folder created successfully with name:" + sqlbackUpFolderName + " in " + path);
+
+			} else {
+				System.out.println("folder already exist with name: " + sqlbackUpFolderName + " in " + path);
+			}
+			for (String x : dbname) {
+				String backupPathname = path + File.separator + x ;
+				File filename = new File(backupPathname);
+				if (filename.exists()) {
+					System.out.println(backupPathname + " already exists");
+				} else {
+					String command = String.format(
+							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
+							dbusername, dbpassword, x, path + File.separator + x );
+					Process process = Runtime.getRuntime().exec(command);
+					process.waitFor();
+					Map<String, String> map = new HashMap<>();
+					map.put("database", x);
+					map.put("Date", getCurrentDateTime());
+					i = process.exitValue() == 0;
+					if (i) {
+						System.out.println("Backup Created successfully for: " + x);
+					} else {
+						System.out.println("Error creating backup");
+					}
+					backupList.add(map);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("An Error occurred while performing the Backup: " + e.getMessage());
+		}
 		return backupList;
 
 	}
@@ -307,7 +335,7 @@ public class AppService {
 			String command = String.format(
 					"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
 					dbusername, dbpassword,
-					backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x + ".sql");
+					backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x );
 			Process process = Runtime.getRuntime().exec(command);
 			process.waitFor();
 			i = process.exitValue() == 0;
@@ -382,21 +410,47 @@ public class AppService {
 				System.out.println("File " + filename + ".sql" + " does not exist");
 			}
 		}
+	}
+	public void createzipfile(String date) throws IOException {
+	    byte[] buffer = new byte[1024];
 
-		zos.close();
-		byte[] zipBytes = baos.toByteArray();
-		baos.close();
-		HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-				.getResponse();
+	    String zipFileName = "backup_" + "_" + date + ".zip";
+	    String backupFolderPath = backupPath + File.separator + "Backup" + File.separator + "Mysql" + File.separator + date;
 
-		response.setContentType("application/zip");
-		response.setHeader("Content-Disposition", "attachment; filename=\"" + x + "\"");
-		response.setContentLength(zipBytes.length);
+	    File backupFolder = new File(backupFolderPath);
+	    if (!backupFolder.exists()) {
+	        throw new FileNotFoundException("Backup folder not found for date " + date);
+	    }
 
-		OutputStream os = response.getOutputStream();
-		os.write(zipBytes);
-		os.flush();
-		os.close();
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ZipOutputStream zos = new ZipOutputStream(baos);
+
+	    File[] filesToZip = backupFolder.listFiles();
+	    for (File file : filesToZip) {
+	        FileInputStream fis = new FileInputStream(file);
+	        zos.putNextEntry(new ZipEntry(file.getName()));
+	        int length;
+	        while ((length = fis.read(buffer)) > 0) {
+	            zos.write(buffer, 0, length);
+	        }
+	        zos.closeEntry();
+	        fis.close();
+	    }
+
+	    zos.close();
+	    byte[] zipBytes = baos.toByteArray();
+	    baos.close();
+
+	    HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+	            .getResponse();
+	    response.setContentType("application/zip");
+	    response.setHeader("Content-Disposition", "attachment; filename=\"" + zipFileName + "\"");
+	    response.setContentLength(zipBytes.length);
+
+	    OutputStream os = response.getOutputStream();
+	    os.write(zipBytes);
+	    os.flush();
+	    os.close();
 	}
 
 //	-------------------------- Show All backup Databases----------
