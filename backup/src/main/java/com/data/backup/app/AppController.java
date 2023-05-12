@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,10 +44,19 @@ public class AppController {
 		return appService.showBackup(date);
 	}
 
-	@GetMapping("/mongo/zip/{date}/{dbName}")
-	public String zip(@PathVariable String date,@PathVariable List<String> dbName) throws IOException {
-		return appService.zip(date, dbName);
+	@GetMapping("/mongo/zip/{date}")
+	public String zip(@PathVariable String date) throws IOException {
+		return appService.zip(date);
 //		appService.createzipfile(dbName);
+	}
+	
+	@GetMapping("/mongo/saveMongoHost/{body}")
+	public void saveMongoHost(@RequestBody Config body) {
+		appService.saveMongoHost(body);
+	}
+	@GetMapping("/mongo/getMongoHost")
+	public Config getMongoHost() {
+		return(appService.getMongoHost());
 	}
 
 //---------------------MYSQL-----------------------------------
@@ -59,6 +69,10 @@ public class AppController {
 		List<Map<String, String>> map = appService.backupDatabase(dbname);
 		return map;
 
+	}
+	@GetMapping("/sql/getMysqlHost")
+	public Config getMysqlHost() {
+		return appService.getMysqlHost();
 	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
@@ -100,6 +114,10 @@ public class AppController {
 	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	     return backupFileNames;
 	 }
+	 @GetMapping("/mongo/saveMysqlHost/{body}")
+		public void saveMysqlHost(@RequestBody Config body) {
+			appService.saveMysqlHost(body);
+		}
 }
 
 
