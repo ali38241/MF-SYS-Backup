@@ -239,7 +239,7 @@ public class AppService {
 	// ---------------------------------gethost----------------------------//
 
 	public void saveMongoHost(Config body) {
-		try (Writer writer = new FileWriter(backupPath + "\\Backup\\mongo.json")) {
+		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mongo.json"))) {
 			Gson gson = new Gson();
 			gson.toJson(body, writer);
 			writer.close();
