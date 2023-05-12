@@ -114,7 +114,7 @@ public class AppController {
 	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	     return backupFileNames;
 	 }
-	 @GetMapping("/mongo/saveMysqlHost/{body}")
+	 @GetMapping("/sql/saveMysqlHost/{body}")
 		public void saveMysqlHost(@RequestBody Config body) {
 			appService.saveMysqlHost(body);
 		}
