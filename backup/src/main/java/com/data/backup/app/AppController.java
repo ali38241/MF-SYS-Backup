@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +51,7 @@ public class AppController {
 //		appService.createzipfile(dbName);
 	}
 	
-	@GetMapping("/mongo/saveMongoHost/{body}")
+	@PostMapping("/mongo/saveMongoHost/{body}")
 	public void saveMongoHost(@RequestBody Config body) {
 		appService.saveMongoHost(body);
 	}
@@ -114,7 +115,7 @@ public class AppController {
 	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	     return backupFileNames;
 	 }
-	 @GetMapping("/sql/saveMysqlHost/{body}")
+	 @PostMapping("/sql/saveMysqlHost/{body}")
 		public void saveMysqlHost(@RequestBody Config body) {
 			appService.saveMysqlHost(body);
 		}
