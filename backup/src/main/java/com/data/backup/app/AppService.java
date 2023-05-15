@@ -1,6 +1,7 @@
 package com.data.backup.app;
 
 import java.io.ByteArrayOutputStream;
+
 import java.io.File;
 import java.io.FileInputStream;
 
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -39,6 +41,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Service
 public class AppService {
 
+	
 	// ----------------------------------Mongo--------------------------------------------
 	private int port = 27017;
 	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
@@ -68,42 +71,54 @@ public class AppService {
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
 		List<Map<String, String>> backupList = new ArrayList<>();
-		if (createBackupFolder()) {
+		boolean success = createBackupFolder();
+		if (success) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
 			System.out.println(status);
 		} else {
 			System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
 		}
-		MongoClient mongo = MongoClients.create();
-		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
-		for (String db : dbName) {
-			if (!existingDbs.contains(db)) {
-				System.err.println("Database " + db + " doesn't exist in db");
-				continue;
-			}
-			Map<String, String> map = new LinkedHashMap<>();
-			map.put("Database", db);
-			map.put("Date", backupFolderName);
-			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "admin", "--username", config.getUser(), "--password",
-					config.getPass(), "--db", db, "--host", config.getHost(),
-					"--port", String.valueOf(port), "--out", backupFolderPath);
-			try {
-				Process p = pb.start();
-				int exitCode = p.waitFor();
-
-				if (exitCode == 0) {
-					System.out.println("Backup created successfully for : " + db);
-
-				} else {
-					System.err.println("Error creating backup!");
+		try (MongoClient mongo = MongoClients.create()) {
+			List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
+			for (String db : dbName) {
+				if (!existingDbs.contains(db)) {
+					System.err.println("Database " + db + " doesn't exist in db");
+					if (success) {
+						System.out.println("Folder deleted" + backupFolderName);
+						FileUtils.deleteDirectory(new File(backupFolderPath));
+					}
+					continue;
 				}
+				Map<String, String> map = new LinkedHashMap<>();
 
-				backupList.add(map);
+				ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "admin", "--username",
+						config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(),
+						"--port", String.valueOf(port), "--out", backupFolderPath);
+				try {
+					Process p = pb.start();
+					int exitCode = p.waitFor();
+					if (exitCode == 0) {
+						map.put("Database", db);
+						map.put("Date", backupFolderName);
+						backupList.add(map);
+						System.out.println("Backup created successfully for : " + db);
 
-			} catch (Exception e) {
-				System.out.printf("Error creating backup for: ", db, e);
+					} else {
+						System.err.println("Error creating backup!");
+						if (success) {
+							System.out.println("Folder deleted:" + backupFolderName);
+							FileUtils.deleteDirectory(new File(backupFolderPath));
+						}
+					}
 
+				} catch (Exception e) {
+					System.out.printf("Error creating backup for: ", db, e);
+
+				}
 			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return backupList;
 	}
@@ -239,6 +254,10 @@ public class AppService {
 	// ---------------------------------gethost----------------------------//
 
 	public void saveMongoHost(Config body) {
+		File file = new File(backupPath + "\\Backup");
+		if (!file.isFile()) {
+			file.mkdir();
+		}
 		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mongo.json"))) {
 			Gson gson = new Gson();
 			gson.toJson(body, writer);
@@ -470,6 +489,10 @@ public class AppService {
 	}
 
 	public void saveMysqlHost(Config body) {
+		File file = new File(backupPath + "\\Backup");
+		if (!file.isFile()) {
+			file.mkdir();
+		}
 		Gson gson = new Gson();
 		try (Writer writer = new FileWriter(backupPath + "\\Backup\\mysql.json")) {
 			gson.toJson(body, writer);
@@ -480,6 +503,7 @@ public class AppService {
 			e.printStackTrace();
 		}
 	}
+
 	public Config getMysqlHost() {
 		Config config = null;
 		try (Reader reader = Files.newBufferedReader(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
@@ -490,4 +514,5 @@ public class AppService {
 		}
 		return config;
 	}
+
 }
