@@ -298,7 +298,9 @@ public class AppService {
 		List<Map<String, String>> backupList = new ArrayList<>();
 
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+
 				"-u" + config.getUser(), "-p" + config.getPass(),"-h",config.getHost(), "-e", "show databases;");
+
 		try {
 			Process p = pb.start();
 			String output = new String(p.getInputStream().readAllBytes());
@@ -318,8 +320,10 @@ public class AppService {
 								"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
 					}
 					String command = String.format(
+
 							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s -h%s --databases %s -r %S",
 							config.getUser(), config.getPass(),config.getHost(), x, path + File.separator + x);
+
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
@@ -352,6 +356,7 @@ public class AppService {
 				String command = String.format(
 						"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -h%s -e \"source %S\"",
 						config.getUser(), config.getPass(),config.getHost(),
+
 						backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
 				Process process = Runtime.getRuntime().exec(command);
 				process.waitFor();
@@ -368,7 +373,9 @@ public class AppService {
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+
 				"-u" + config.getUser(), "-p" + config.getPass(),"-h",config.getHost(), "-e", "show databases;");
+
 		Map<Integer, String> result = new HashMap<>();
 		try {
 			Process p = pb.start();
@@ -474,7 +481,7 @@ public class AppService {
 
 	public void saveMysqlHost(Config body) {
 		Gson gson = new Gson();
-		try (Writer writer = new FileWriter(backupPath + "\\Backup\\mysql.json")) {
+		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
 			gson.toJson(body, writer);
 			writer.close();
 		} catch (JsonIOException e) {

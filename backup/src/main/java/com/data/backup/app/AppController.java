@@ -18,8 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @CrossOrigin("*")
 public class AppController {
-
+	
 	private AppService appService;
+//	Config config = appService.getMongoHost();
 
 	public AppController(AppService appService) {
 		this.appService = appService;
