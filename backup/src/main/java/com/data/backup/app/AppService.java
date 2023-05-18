@@ -297,8 +297,8 @@ public class AppService {
 		boolean i;
 		List<Map<String, String>> backupList = new ArrayList<>();
 
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+				"-u" + config.getUser(), "-p" + config.getPass(),"-h",config.getHost(), "-e", "show databases;");
 		try {
 			Process p = pb.start();
 			String output = new String(p.getInputStream().readAllBytes());
@@ -318,8 +318,8 @@ public class AppService {
 								"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
 					}
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-							config.getUser(), config.getPass(), x, path + File.separator + x);
+							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s -h%s --databases %s -r %S",
+							config.getUser(), config.getPass(),config.getHost(), x, path + File.separator + x);
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
@@ -350,8 +350,8 @@ public class AppService {
 		try {
 			for (String x : dbname) {
 				String command = String.format(
-						"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-						config.getUser(), config.getPass(),
+						"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -h%s -e \"source %S\"",
+						config.getUser(), config.getPass(),config.getHost(),
 						backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
 				Process process = Runtime.getRuntime().exec(command);
 				process.waitFor();
@@ -367,8 +367,8 @@ public class AppService {
 
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+				"-u" + config.getUser(), "-p" + config.getPass(),"-h",config.getHost(), "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
 		try {
 			Process p = pb.start();
@@ -469,6 +469,8 @@ public class AppService {
 		}
 		return map;
 	}
+	
+//	----------------------------------- IP Settings ---------------------------
 
 	public void saveMysqlHost(Config body) {
 		Gson gson = new Gson();
@@ -482,6 +484,9 @@ public class AppService {
 		}
 	}
 
+	
+	
+//	------------------------------- config Method----------------------------------
 	public Config getMysqlHost() {
 		Config config = null;
 		try (Reader reader = Files.newBufferedReader(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
