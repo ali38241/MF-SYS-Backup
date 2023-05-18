@@ -40,12 +40,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AppService {
 
 	// ----------------------------------Mongo--------------------------------------------
+	private final String host = "localhost";
 	private int port = 27017;
 	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
 	private String backupFolderName;
 	private String backupFolderPath;
 	private File backupFolder;
-	private String status = "";
 
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
@@ -58,7 +58,6 @@ public class AppService {
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
 			backupFolder.mkdir();
-//			status = "Created folder \\Backup\\Mongo in " + backupPath;
 			return true;
 		}
 		return false;
@@ -70,9 +69,10 @@ public class AppService {
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
-			System.out.println(status);
 		} else {
 			System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
+	        return backupList; // Return empty list if folder creation failed
+
 		}
 		MongoClient mongo = MongoClients.create();
 		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
@@ -84,13 +84,14 @@ public class AppService {
 			Map<String, String> map = new LinkedHashMap<>();
 			map.put("Database", db);
 			map.put("Date", backupFolderName);
-			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "admin", "--username", config.getUser(), "--password",
-					config.getPass(), "--db", db, "--host", config.getHost(),
-					"--port", String.valueOf(port), "--out", backupFolderPath);
+			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
+					config.getUser(), "--password", config.getPass(), "--db", db, "--host", host, "--port",
+					String.valueOf(port), "--out", backupFolderPath);
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
 
+				
 				if (exitCode == 0) {
 					System.out.println("Backup created successfully for : " + db);
 
@@ -116,7 +117,7 @@ public class AppService {
 		File file = new File(path);
 		if (file.exists()) {
 			for (String db : dbName) {
-				ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, path + File.separator + db);
+				ProcessBuilder pb = new ProcessBuilder("mongorestore", "--numInsertionWorkersPerCollection", "16", "--drop", "-d", db, path + File.separator + db);
 				try {
 					Process p = pb.start();
 					int exitCode = p.waitFor();
@@ -296,7 +297,7 @@ public class AppService {
 		boolean i;
 		List<Map<String, String>> backupList = new ArrayList<>();
 
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
 				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
 		try {
 			Process p = pb.start();
@@ -317,7 +318,7 @@ public class AppService {
 								"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
 					}
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
+							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
 							config.getUser(), config.getPass(), x, path + File.separator + x);
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
@@ -349,7 +350,7 @@ public class AppService {
 		try {
 			for (String x : dbname) {
 				String command = String.format(
-						"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
+						"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
 						config.getUser(), config.getPass(),
 						backupPath + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
 				Process process = Runtime.getRuntime().exec(command);
@@ -366,7 +367,7 @@ public class AppService {
 
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
 				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
 		try {
@@ -480,6 +481,7 @@ public class AppService {
 			e.printStackTrace();
 		}
 	}
+
 	public Config getMysqlHost() {
 		Config config = null;
 		try (Reader reader = Files.newBufferedReader(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
