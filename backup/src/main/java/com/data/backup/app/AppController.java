@@ -116,10 +116,20 @@ public class AppController {
 	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	     return backupFileNames;
 	 }
+	 
+	 
+//	 ---------------------------- IP Settings------------------------------
+	 
 	 @PostMapping("/sql/saveMysqlHost/{body}")
 		public void saveMysqlHost(@RequestBody Config body) {
 			appService.saveMysqlHost(body);
 		}
+	 
+	 @GetMapping("/sql/getname")
+	 public Config con() {
+		return appService.getMysqlHost();
+		 
+	 }
 }
 
 
