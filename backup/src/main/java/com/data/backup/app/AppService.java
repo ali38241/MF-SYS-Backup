@@ -40,7 +40,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AppService {
 
 	// ----------------------------------Mongo--------------------------------------------
-	private final String host = "localhost";
+//	private final String host = "localhost";
 	private int port = 27017;
 	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
 	private String backupFolderName;
@@ -74,7 +74,8 @@ public class AppService {
 	        return backupList; // Return empty list if folder creation failed
 
 		}
-		MongoClient mongo = MongoClients.create();
+		String host = "mongodb://"+config.getHost();
+		MongoClient mongo = MongoClients.create(host);
 		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
 		for (String db : dbName) {
 			if (!existingDbs.contains(db)) {
@@ -85,7 +86,7 @@ public class AppService {
 			map.put("Database", db);
 			map.put("Date", backupFolderName);
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
-					config.getUser(), "--password", config.getPass(), "--db", db, "--host", host, "--port",
+					config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(), "--port",
 					String.valueOf(port), "--out", backupFolderPath);
 			try {
 				Process p = pb.start();
@@ -112,12 +113,14 @@ public class AppService {
 	// -----------------------------Restore Mongo Databases----------------------
 	public String restore(String date, ArrayList<String> dbName) {
 
+//		Config config = getMongoHost();
+//		String host = "mongodb://" + config.getHost();
 		String path = backupPath + "\\Backup\\Mongo" + File.separator + date;
 		String result = "";
 		File file = new File(path);
 		if (file.exists()) {
 			for (String db : dbName) {
-				ProcessBuilder pb = new ProcessBuilder("mongorestore", "--numInsertionWorkersPerCollection", "16", "--drop", "-d", db, path + File.separator + db);
+				ProcessBuilder pb = new ProcessBuilder("mongorestore","--drop", "-d", db, path + File.separator + db);
 				try {
 					Process p = pb.start();
 					int exitCode = p.waitFor();
@@ -143,7 +146,9 @@ public class AppService {
 	// ------------------------------Display All Mongo
 	// Databases----------------------
 	public Map<Integer, String> showAll() {
-		MongoClient mongo = MongoClients.create();
+		Config config = getMongoHost();
+		String host = "mongodb://"+config.getHost();
+		MongoClient mongo = MongoClients.create(host);
 		MongoIterable<String> list = mongo.listDatabaseNames();
 		Map<Integer, String> map = new HashMap<>();
 		int i = 1;
@@ -298,7 +303,7 @@ public class AppService {
 		List<Map<String, String>> backupList = new ArrayList<>();
 
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
+				"-u" + config.getUser(), "-p" + config.getPass(),"-P","3307", "-h",config.getHost(), "-e", "show databases;");
 		try {
 			Process p = pb.start();
 			String output = new String(p.getInputStream().readAllBytes());
@@ -368,7 +373,7 @@ public class AppService {
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-h", config.getHost(), "-p" + config.getPass(), "-e", "show databases;");
+				"-u" + config.getUser(),"-p" + config.getPass(), "-h", config.getHost(),  "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
 		try {
 			Process p = pb.start();
