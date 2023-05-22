@@ -91,24 +91,85 @@ public class AppService {
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
-
-				
+				System.out.println("Backup process completed for: " + db);
+			    System.out.println("Exit code: " + exitCode);
+			    
 				if (exitCode == 0) {
 					System.out.println("Backup created successfully for : " + db);
 
 				} else {
 					System.err.println("Error creating backup!");
+					backupFolder.delete();
 				}
 
 				backupList.add(map);
 
 			} catch (Exception e) {
 				System.out.printf("Error creating backup for: ", db, e);
-
+				backupFolder.delete();
 			}
 		}
 		return backupList;
 	}
+//	public List<Map<String, String>> backup(ArrayList<String> dbName) {
+//	    Config config = getMongoHost();
+//	    List<Map<String, String>> backupList = new ArrayList<>();
+//	    
+//	    if (createBackupFolder()) {
+//	        System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
+//	    } else {
+//	        System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
+//	        return backupList; // Return empty list if folder creation failed
+//	    }
+//	    
+//	    String host = "mongodb://" + config.getHost();
+//	    MongoClient mongo = MongoClients.create(host);
+//	    List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
+//	    
+//	    for (String db : dbName) {
+//	        if (!existingDbs.contains(db)) {
+//	            System.err.println("Database " + db + " doesn't exist in db");
+//	            continue;
+//	        }
+//	        
+//	        Map<String, String> map = new LinkedHashMap<>();
+//	        map.put("Database", db);
+//	        map.put("Date", backupFolderName);
+//	        
+//	        ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
+//	                config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(), "--port",
+//	                String.valueOf(port), "--out", backupFolderPath);
+//	        
+//	        try {
+//	            Process p = pb.start();
+//	            
+//	            // Create a separate thread to wait for the process to complete
+//	            Thread waitForThread = new Thread(() -> {
+//	                try {
+//	                    int exitCode = p.waitFor();
+//	                    
+//	                    if (exitCode == 0) {
+//	                        System.out.println("Backup created successfully for : " + db);
+//	                    } else {
+//	                        System.err.println("Error creating backup!");
+//	                        backupFolder.delete();
+//	                    }
+//	                } catch (InterruptedException e) {
+//	                    e.printStackTrace();
+//	                }
+//	            });
+//	            
+//	            waitForThread.start(); // Start the thread
+//	            
+//	            backupList.add(map);
+//	        } catch (Exception e) {
+//	            System.out.printf("Error creating backup for: ", db, e);
+//	            backupFolder.delete();
+//	        }
+//	    }
+//	    
+//	    return backupList;
+//	}
 
 	// -----------------------------Restore Mongo Databases----------------------
 	public String restore(String date, ArrayList<String> dbName) {
@@ -275,6 +336,7 @@ public class AppService {
 	private File sqlBackupFolder;
 	private String path = "";
 
+
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
 		LocalDateTime dateTime = LocalDateTime.now();
@@ -299,12 +361,18 @@ public class AppService {
 
 	public List<Map<String, String>> backupDatabase(List<String> dbname) {
 		Config config = getMysqlHost();
-		boolean i;
-		List<Map<String, String>> backupList = new ArrayList<>();
+		if (backupFolderName()) {
+			System.out.println(
+					"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
 
+		}
+		boolean i;
+		
+		List<Map<String, String>> backupList = new ArrayList<>();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(),"-P","3307", "-h",config.getHost(), "-e", "show databases;");
+				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
 		try {
+			
 			Process p = pb.start();
 			String output = new String(p.getInputStream().readAllBytes());
 			String[] databases = output.split("\n");
@@ -318,31 +386,34 @@ public class AppService {
 					}
 				}
 				if (found) {
-					if (backupFolderName()) {
-						System.out.println(
-								"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
-					}
+					
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-							config.getUser(), config.getPass(), x, path + File.separator + x);
+							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
+							config.getHost(),config.getUser(), config.getPass(), x, path + File.separator + x);
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
 					map.put("database", x);
-					map.put("Date", getCurrentDateTime());
+					map.put("Date", sqlbackUpFolderName);
 					i = process.exitValue() == 0;
 					if (i) {
 						System.out.println("Backup created successfully for: " + x);
 					} else {
+						sqlBackupFolder.delete();
 						System.out.println("Error creating backup");
 					}
 					backupList.add(map);
 				} else {
+					File[] files = sqlBackupFolder.listFiles();
+					if(files.length != 0) {
+					    sqlBackupFolder.delete();
+					}
 					System.out.println("Database does not exist: " + x);
 				}
 			}
 		} catch (Exception e) {
 			System.out.println("An error occurred while performing the backup: " + e.getMessage());
+			sqlBackupFolder.delete();
 		}
 		return backupList;
 	}
@@ -372,6 +443,7 @@ public class AppService {
 
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
+		String stmt = String.format("CREATE USER '%s'@'%s' IDENTIFIED BY \"%s\";"+ "GRANT ALL PRIVILEGES ON *.* TO '%s'%s';", config.getUser(),config.getHost(),config.getPass(),config.getUser(),config.getHost());
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
 				"-u" + config.getUser(),"-p" + config.getPass(), "-h", config.getHost(),  "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
