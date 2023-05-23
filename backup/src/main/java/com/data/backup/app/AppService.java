@@ -80,6 +80,7 @@ public class AppService {
 		for (String db : dbName) {
 			if (!existingDbs.contains(db)) {
 				System.err.println("Database " + db + " doesn't exist in db");
+//				backupFolder.delete();
 				continue;
 			}
 			Map<String, String> map = new LinkedHashMap<>();
@@ -181,8 +182,7 @@ public class AppService {
 		File file = new File(path);
 		if (file.exists()) {
 			for (String db : dbName) {
-				ProcessBuilder pb = new ProcessBuilder("mongorestore", "--authenticationDatabase", "test", "--username",		                
-						config.getUser(), "--password", config.getPass(), "--host",host, "-d", db, path + File.separator + db);
+				ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, path + File.separator + db);
 				try {
 					Process p = pb.start();
 							            
