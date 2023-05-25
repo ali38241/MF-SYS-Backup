@@ -4,14 +4,13 @@ public class Config {
 	private String user = "";
 	private String pass = "";
 	private String host = "";
-
 	public String getUser() {
 		return user;
 	}
 	public Config() {
 		super();
 	}
-	public Config(String user, String pass, String host) {
+	public Config( String user, String pass, String host) {
 		super();
 		this.user = user;
 		this.pass = pass;
