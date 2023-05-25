@@ -1,6 +1,7 @@
 package com.data.backup.app;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Scanner;
 import java.io.File;
 import java.io.FileInputStream;
 
@@ -15,6 +16,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -330,8 +332,6 @@ public class AppService {
 
 //-------------------------------////MYSQL////----------------------------------------//
 
-//	private String dbusername = "root";
-//	private String dbpassword = "root";
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String path = "";
@@ -355,12 +355,20 @@ public class AppService {
 		} else {
 			return false;
 		}
+		
 	}
-
+	
+	
 //	------------------------------ backup databses-------------------------//
 
 	public List<Map<String, String>> backupDatabase(List<String> dbname) {
 		Config config = getMysqlHost();
+		
+//		Input validation for dbname
+		if(dbname == null || dbname.isEmpty()) {
+			throw new IllegalArgumentException("The list of database names are empty or null.");
+		}
+		
 		if (backupFolderName()) {
 			System.out.println(
 					"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
@@ -369,7 +377,7 @@ public class AppService {
 		boolean i;
 		
 		List<Map<String, String>> backupList = new ArrayList<>();
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
 				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
 		try {
 			
@@ -388,7 +396,7 @@ public class AppService {
 				if (found) {
 					
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
+							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
 							config.getHost(),config.getUser(), config.getPass(), x, path + File.separator + x);
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
@@ -408,7 +416,7 @@ public class AppService {
 					if(files.length != 0) {
 					    sqlBackupFolder.delete();
 					}
-					System.out.println("Database does not exist: " + x);
+					System.out.println("Database '" +x+ "' does not exist ");
 				}
 			}
 		} catch (Exception e) {
@@ -418,6 +426,9 @@ public class AppService {
 		return backupList;
 	}
 
+	
+	
+	
 //	-----------------------------------restore databases----------------------
 
 	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
@@ -443,8 +454,8 @@ public class AppService {
 
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
-		String stmt = String.format("CREATE USER '%s'@'%s' IDENTIFIED BY \"%s\";"+ "GRANT ALL PRIVILEGES ON *.* TO '%s'%s';", config.getUser(),config.getHost(),config.getPass(),config.getUser(),config.getHost());
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
+//		String stmt = String.format("CREATE USER '%s'@'%s' IDENTIFIED BY \"%s\";"+ "GRANT ALL PRIVILEGES ON *.* TO '%s'%s';", config.getUser(),config.getHost(),config.getPass(),config.getUser(),config.getHost());
+		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
 				"-u" + config.getUser(),"-p" + config.getPass(), "-h", config.getHost(),  "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
 		try {
