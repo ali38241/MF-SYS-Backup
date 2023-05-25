@@ -18,68 +18,52 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @CrossOrigin("*")
 public class AppController {
-
+	
 	private AppService appService;
+//	Config config = appService.getMongoHost();
 
 	public AppController(AppService appService) {
-
 		this.appService = appService;
 	}
 	
-//	private LoanService loanService;
-//	public AppController(LoanService loanService) {
-//
-//		this.loanService = loanService;
-//	}
-
-	//---------------------------------MONGO-BACKUP-------------------------
 
 	@GetMapping("/mongo/backup/{dbName}")
-	public List<Map<String, String>> mongoBackup(@PathVariable ArrayList<String> dbName) {
+	public List<Map<String, String>> backUpMultiple(@PathVariable ArrayList<String> dbName) {
 		return appService.backup(dbName);
 	}
-	//---------------------------------MONGO-restore-------------------------
 	@GetMapping("/mongo/restore/{date}/{dbName}")
 	public String restore(@PathVariable String date, @PathVariable ArrayList<String> dbName) {
 		return appService.restore(date, dbName);
 	}
-	//---------------------------------MONGO-showAll-------------------------
+
 	@GetMapping("/mongo/showAll")
 	public Map<Integer, String> showAll() {
 		return appService.showAll();
 	}
-	//---------------------------------MONGO-show-ondisk-------------------------
+
 	@GetMapping("/mongo/showBackup/{date}")
 	public Map<String, List<String>> showBackup(@PathVariable String date) {
 		return appService.showBackup(date);
 	}
-	//---------------------------------MONGO-zip+download-------------------------
+
 	@GetMapping("/mongo/zip/{date}")
 	public String zip(@PathVariable String date) throws IOException {
 		return appService.zip(date);
+//		appService.createzipfile(dbName);
 	}
-	//---------------------------------MONGO-saveHost-------------------------
+	
 	@PostMapping("/mongo/saveMongoHost/{body}")
 	public void saveMongoHost(@RequestBody Config body) {
 		appService.saveMongoHost(body);
 	}
-	//---------------------------------MONGO-getHost-------------------------
 	@GetMapping("/mongo/getMongoHost")
 	public Config getMongoHost() {
 		return(appService.getMongoHost());
 	}
-	
-	
-	
-	
-	
-	
-//-------------------------------------------------------------
-//---------------------MYSQL-----------------------------------
-//------------------------------------------------------------
 
-	
-	
+//---------------------MYSQL-----------------------------------
+
+
 //	----------------------Backup DataBase----------------------
 
 	@GetMapping("/sql/getbackup/{dbname}")
@@ -91,10 +75,6 @@ public class AppController {
 	@GetMapping("/sql/getMysqlHost")
 	public Config getMysqlHost() {
 		return appService.getMysqlHost();
-	}
-	@GetMapping("/sql/getAllUser")
-	public List<Map<String,Object>> getAllUser(){
-		return appService.getAllUserInDB();
 	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
@@ -136,10 +116,20 @@ public class AppController {
 	     Map<String, List<String>> backupFileNames = appService.getBackupFileNames(foldername);
 	     return backupFileNames;
 	 }
+	 
+	 
+//	 ---------------------------- IP Settings------------------------------
+	 
 	 @PostMapping("/sql/saveMysqlHost/{body}")
-		public String saveMysqlHost(@RequestBody Config body) {
-			return appService.saveMysqlHost(body);
+		public void saveMysqlHost(@RequestBody Config body) {
+			appService.saveMysqlHost(body);
 		}
+	 
+	 @GetMapping("/sql/getname")
+	 public Config con() {
+		return appService.getMysqlHost();
+		 
+	 }
 }
 
 

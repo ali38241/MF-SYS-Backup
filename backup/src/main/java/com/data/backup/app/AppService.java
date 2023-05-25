@@ -1,7 +1,6 @@
 package com.data.backup.app;
 
 import java.io.ByteArrayOutputStream;
-
 import java.io.File;
 import java.io.FileInputStream;
 
@@ -24,9 +23,6 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.tomcat.util.http.fileupload.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -42,16 +38,14 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class AppService {
-	@Autowired
-	JdbcTemplate jdbcTemp;
 
 	// ----------------------------------Mongo--------------------------------------------
+//	private final String host = "localhost";
 	private int port = 27017;
 	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
 	private String backupFolderName;
 	private String backupFolderPath;
 	private File backupFolder;
-	private String status = "";
 
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
@@ -64,7 +58,6 @@ public class AppService {
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
 			backupFolder.mkdir();
-//			status = "Created folder \\Backup\\Mongo in " + backupPath;
 			return true;
 		}
 		return false;
@@ -74,83 +67,146 @@ public class AppService {
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
 		List<Map<String, String>> backupList = new ArrayList<>();
-		boolean success = createBackupFolder();
-		if (success) {
+		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
-			System.out.println(status);
 		} else {
 			System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
+			return backupList; // Return empty list if folder creation failed
+
 		}
-		try (MongoClient mongo = MongoClients.create()) {
-			List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
-			for (String db : dbName) {
-				if (!existingDbs.contains(db)) {
-					System.err.println("Database " + db + " doesn't exist in db");
-					if (success) {
-						System.out.println("Folder deleted" + backupFolderName);
-						FileUtils.deleteDirectory(new File(backupFolderPath));
-					}
-					continue;
-				}
-				Map<String, String> map = new LinkedHashMap<>();
-
-				ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "admin", "--username",
-						config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(),
-						"--port", String.valueOf(port), "--out", backupFolderPath);
-				try {
-					Process p = pb.start();
-					int exitCode = p.waitFor();
-					if (exitCode == 0) {
-						map.put("Database", db);
-						map.put("Date", backupFolderName);
-						backupList.add(map);
-						System.out.println("Backup created successfully for : " + db);
-
-					} else {
-						System.err.println("Error creating backup!");
-						if (success) {
-							System.out.println("Folder deleted:" + backupFolderName);
-							FileUtils.deleteDirectory(new File(backupFolderPath));
-						}
-					}
-
-				} catch (Exception e) {
-					System.out.printf("Error creating backup for: ", db, e);
-
-				}
+		String host = "mongodb://" + config.getHost();
+		MongoClient mongo = MongoClients.create(host);
+		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
+		for (String db : dbName) {
+			if (!existingDbs.contains(db)) {
+				System.err.println("Database " + db + " doesn't exist in db");
+//				backupFolder.delete();
+				continue;
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Map<String, String> map = new LinkedHashMap<>();
+			map.put("Database", db);
+			map.put("Date", backupFolderName);
+			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
+					config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(), "--port",
+					String.valueOf(port), "--out", backupFolderPath);
+			try {
+				Process p = pb.start();
+				int exitCode = p.waitFor();
+				System.out.println("Backup process completed for: " + db);
+				System.out.println("Exit code: " + exitCode);
+
+				if (exitCode == 0) {
+					System.out.println("Backup created successfully for : " + db);
+
+				} else {
+					System.err.println("Error creating backup!");
+					backupFolder.delete();
+				}
+
+				backupList.add(map);
+
+			} catch (Exception e) {
+				System.out.printf("Error creating backup for: ", db, e);
+				backupFolder.delete();
+			}
 		}
 		return backupList;
 	}
+//	public List<Map<String, String>> backup(ArrayList<String> dbName) {
+//	    Config config = getMongoHost();
+//	    List<Map<String, String>> backupList = new ArrayList<>();
+//	    
+//	    if (createBackupFolder()) {
+//	        System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
+//	    } else {
+//	        System.out.println("Error creating folder with name: " + backupFolderName + " in " + backupFolderPath);
+//	        return backupList; // Return empty list if folder creation failed
+//	    }
+//	    
+//	    String host = "mongodb://" + config.getHost();
+//	    MongoClient mongo = MongoClients.create(host);
+//	    List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
+//	    
+//	    for (String db : dbName) {
+//	        if (!existingDbs.contains(db)) {
+//	            System.err.println("Database " + db + " doesn't exist in db");
+//	            continue;
+//	        }
+//	        
+//	        Map<String, String> map = new LinkedHashMap<>();
+//	        map.put("Database", db);
+//	        map.put("Date", backupFolderName);
+//	        
+//	        ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
+//	                config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(), "--port",
+//	                String.valueOf(port), "--out", backupFolderPath);
+//	        
+//	        try {
+//	            Process p = pb.start();
+//	            
+//	            // Create a separate thread to wait for the process to complete
+//	            Thread waitForThread = new Thread(() -> {
+//	                try {
+//	                    int exitCode = p.waitFor();
+//	                    
+//	                    if (exitCode == 0) {
+//	                        System.out.println("Backup created successfully for : " + db);
+//	                    } else {
+//	                        System.err.println("Error creating backup!");
+//	                        backupFolder.delete();
+//	                    }
+//	                } catch (InterruptedException e) {
+//	                    e.printStackTrace();
+//	                }
+//	            });
+//	            
+//	            waitForThread.start(); // Start the thread
+//	            
+//	            backupList.add(map);
+//	        } catch (Exception e) {
+//	            System.out.printf("Error creating backup for: ", db, e);
+//	            backupFolder.delete();
+//	        }
+//	    }
+//	    
+//	    return backupList;
+//	}
 
 	// -----------------------------Restore Mongo Databases----------------------
 	public String restore(String date, ArrayList<String> dbName) {
 
+		Config config = getMongoHost();
+		String host = "mongodb://" + config.getHost();
 		String path = backupPath + "\\Backup\\Mongo" + File.separator + date;
-		String result = "";
+		String result;
 		File file = new File(path);
 		if (file.exists()) {
 			for (String db : dbName) {
 				ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, path + File.separator + db);
 				try {
 					Process p = pb.start();
-					int exitCode = p.waitFor();
-
-					if (exitCode == 0) {
-						System.out.println("Database restored successfully for : " + db);
-						result += ("Database restored successfully!:" + db + "\r\n");
-					} else {
-						System.out.println("Error restoring Database!" + db);
-						result = "Error restoring Database!";
-					}
-				} catch (IOException | InterruptedException e) {
+							            
+					Thread waitForThread = new Thread(() -> {
+						try {
+							int exitCode = p.waitFor();
+							if (exitCode == 0) {
+								System.out.println("Database restored successfully for : " + db);
+//							 ("Database restored successfully!:" + db + "\r\n");
+							} else {
+								System.out.println("Error restoring Database!" + db);
+//							result = "Error restoring Database!";
+							}
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					});
+					waitForThread.start();
+				
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
-			return result;
+			return "";
 
 		} else {
 			return (date + " doesn't exists in " + backupPath + "\\Backup\\Mongo");
@@ -160,7 +216,9 @@ public class AppService {
 	// ------------------------------Display All Mongo
 	// Databases----------------------
 	public Map<Integer, String> showAll() {
-		MongoClient mongo = MongoClients.create();
+		Config config = getMongoHost();
+		String host = "mongodb://" + config.getHost();
+		MongoClient mongo = MongoClients.create(host);
 		MongoIterable<String> list = mongo.listDatabaseNames();
 		Map<Integer, String> map = new HashMap<>();
 		int i = 1;
@@ -257,10 +315,6 @@ public class AppService {
 	// ---------------------------------gethost----------------------------//
 
 	public void saveMongoHost(Config body) {
-		File file = new File(backupPath + "\\Backup");
-		if (!file.isFile()) {
-			file.mkdir();
-		}
 		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mongo.json"))) {
 			Gson gson = new Gson();
 			gson.toJson(body, writer);
@@ -315,12 +369,17 @@ public class AppService {
 
 	public List<Map<String, String>> backupDatabase(List<String> dbname) {
 		Config config = getMysqlHost();
-		boolean i;
-		List<Map<String, String>> backupList = new ArrayList<>();
+		if (backupFolderName()) {
+			System.out.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
 
+		}
+		boolean i;
+
+		List<Map<String, String>> backupList = new ArrayList<>();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
+				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
 		try {
+
 			Process p = pb.start();
 			String output = new String(p.getInputStream().readAllBytes());
 			String[] databases = output.split("\n");
@@ -334,31 +393,34 @@ public class AppService {
 					}
 				}
 				if (found) {
-					if (backupFolderName()) {
-						System.out.println(
-								"Folder created successfully with name: " + sqlbackUpFolderName + " in " + path);
-					}
+
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -u%s -p%s --databases %s -r %S",
-							config.getUser(), config.getPass(), x, path + File.separator + x);
+							"\"C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
+							config.getHost(), config.getUser(), config.getPass(), x, path + File.separator + x);
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
 					map.put("database", x);
-					map.put("Date", getCurrentDateTime());
+					map.put("Date", sqlbackUpFolderName);
 					i = process.exitValue() == 0;
 					if (i) {
 						System.out.println("Backup created successfully for: " + x);
 					} else {
+						sqlBackupFolder.delete();
 						System.out.println("Error creating backup");
 					}
 					backupList.add(map);
 				} else {
+					File[] files = sqlBackupFolder.listFiles();
+					if (files.length != 0) {
+						sqlBackupFolder.delete();
+					}
 					System.out.println("Database does not exist: " + x);
 				}
 			}
 		} catch (Exception e) {
 			System.out.println("An error occurred while performing the backup: " + e.getMessage());
+			sqlBackupFolder.delete();
 		}
 		return backupList;
 	}
@@ -388,8 +450,11 @@ public class AppService {
 
 	public Map<Integer, String> viewall() {
 		Config config = getMysqlHost();
+		String stmt = String.format(
+				"CREATE USER '%s'@'%s' IDENTIFIED BY \"%s\";" + "GRANT ALL PRIVILEGES ON *.* TO '%s'%s';",
+				config.getUser(), config.getHost(), config.getPass(), config.getUser(), config.getHost());
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-e", "show databases;");
+				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
 		Map<Integer, String> result = new HashMap<>();
 		try {
 			Process p = pb.start();
@@ -491,14 +556,9 @@ public class AppService {
 		return map;
 	}
 
-	public String saveMysqlHost(Config body) {
-
-		File file = new File(backupPath + "\\Backup");
-		if (!file.isFile()) {
-			file.mkdir();
-		}
+	public void saveMysqlHost(Config body) {
 		Gson gson = new Gson();
-		try (Writer writer = new FileWriter(backupPath + "\\Backup\\mysql.json")) {
+		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
 			gson.toJson(body, writer);
 			writer.close();
 		} catch (JsonIOException e) {
@@ -506,33 +566,6 @@ public class AppService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		Config config = getMysqlHost();
-		String createUser = "CREATE USER ?@? IDENTIFIED BY ?;";
-		String grant = "GRANT ALL PRIVILEGES ON *.* TO ?@?;";
-		String cmd = "select User,Host from mysql.user where user = ? and host = ? ";
-		List<Map<String, Object>> result = jdbcTemp.queryForList(cmd, config.getUser(), config.getHost());
-		if (result.isEmpty()) {
-			try {
-				jdbcTemp.execute("FLUSH PRIVILEGES");
-				jdbcTemp.update(createUser, config.getUser(), config.getHost(), config.getPass());
-				jdbcTemp.update(grant, config.getUser(), config.getHost());
-				jdbcTemp.execute("FLUSH PRIVILEGES");
-				System.out.println("User created succesfully. \nUser: "+config.getUser()+"\nHost: "+config.getHost());
-				return "User created succesfully. \nUser: "+config.getUser()+"\nHost: "+config.getHost();
-			} catch (Exception e) {
-				
-				System.out.println("Error creating user");
-				System.out.println(e.getMessage());
-				e.printStackTrace();
-				return "Error creating user";
-			}
-		} else {
-			System.out.println("User already exists: "+result);
-			return "User already exists: "+result;
-		}
-	}
-	public List<Map<String,Object>> getAllUserInDB(){
-		return jdbcTemp.queryForList("select User,Host from mysql.user");
 	}
 
 	public Config getMysqlHost() {
@@ -545,5 +578,4 @@ public class AppService {
 		}
 		return config;
 	}
-
 }
