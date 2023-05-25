@@ -25,6 +25,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.tomcat.util.http.fileupload.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -40,8 +42,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class AppService {
+	@Autowired
+	JdbcTemplate jdbcTemp;
 
-	
 	// ----------------------------------Mongo--------------------------------------------
 	private int port = 27017;
 	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
@@ -488,7 +491,8 @@ public class AppService {
 		return map;
 	}
 
-	public void saveMysqlHost(Config body) {
+	public String saveMysqlHost(Config body) {
+
 		File file = new File(backupPath + "\\Backup");
 		if (!file.isFile()) {
 			file.mkdir();
@@ -502,6 +506,33 @@ public class AppService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		Config config = getMysqlHost();
+		String createUser = "CREATE USER ?@? IDENTIFIED BY ?;";
+		String grant = "GRANT ALL PRIVILEGES ON *.* TO ?@?;";
+		String cmd = "select User,Host from mysql.user where user = ? and host = ? ";
+		List<Map<String, Object>> result = jdbcTemp.queryForList(cmd, config.getUser(), config.getHost());
+		if (result.isEmpty()) {
+			try {
+				jdbcTemp.execute("FLUSH PRIVILEGES");
+				jdbcTemp.update(createUser, config.getUser(), config.getHost(), config.getPass());
+				jdbcTemp.update(grant, config.getUser(), config.getHost());
+				jdbcTemp.execute("FLUSH PRIVILEGES");
+				System.out.println("User created succesfully. \nUser: "+config.getUser()+"\nHost: "+config.getHost());
+				return "User created succesfully. \nUser: "+config.getUser()+"\nHost: "+config.getHost();
+			} catch (Exception e) {
+				
+				System.out.println("Error creating user");
+				System.out.println(e.getMessage());
+				e.printStackTrace();
+				return "Error creating user";
+			}
+		} else {
+			System.out.println("User already exists: "+result);
+			return "User already exists: "+result;
+		}
+	}
+	public List<Map<String,Object>> getAllUserInDB(){
+		return jdbcTemp.queryForList("select User,Host from mysql.user");
 	}
 
 	public Config getMysqlHost() {

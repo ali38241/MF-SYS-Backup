@@ -92,6 +92,10 @@ public class AppController {
 	public Config getMysqlHost() {
 		return appService.getMysqlHost();
 	}
+	@GetMapping("/sql/getAllUser")
+	public List<Map<String,Object>> getAllUser(){
+		return appService.getAllUserInDB();
+	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
 
@@ -133,8 +137,8 @@ public class AppController {
 	     return backupFileNames;
 	 }
 	 @PostMapping("/sql/saveMysqlHost/{body}")
-		public void saveMysqlHost(@RequestBody Config body) {
-			appService.saveMysqlHost(body);
+		public String saveMysqlHost(@RequestBody Config body) {
+			return appService.saveMysqlHost(body);
 		}
 }
 
