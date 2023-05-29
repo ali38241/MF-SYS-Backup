@@ -40,11 +40,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class AppService {
-
+	
 	// ----------------------------------Mongo--------------------------------------------
 //	private final String host = "localhost";
 	private int port = 27017;
-	private final String backupPath = System.getProperty("user.home") + File.separator + "Downloads";
+	
+	private final String backupPath = null;
 	private String backupFolderName;
 	private String backupFolderPath;
 	private File backupFolder;
@@ -65,7 +66,7 @@ public class AppService {
 		return false;
 	}
 
-//--------------------------------Backup Mongo Databases----------------------------------
+//-------------------- ------------Backup Mongo Databases----------------------------------
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
 		List<Map<String, String>> backupList = new ArrayList<>();
@@ -344,6 +345,7 @@ public class AppService {
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String path = "";
+	private String pathLocation = "";
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -352,8 +354,9 @@ public class AppService {
 	}
 
 	private Boolean backupFolderName() {
+		String x = getMysqlHost().getpath();
 		sqlbackUpFolderName = getCurrentDateTime();
-		path = backupPath + File.separator + "Backup" + File.separator + "Mysql" + File.separator + sqlbackUpFolderName;
+		path = x + File.separator + "Backup" + File.separator + "Mysql" + File.separator + sqlbackUpFolderName;
 		sqlBackupFolder = new File(path);
 
 		if (!sqlBackupFolder.exists()) {
@@ -568,10 +571,15 @@ public class AppService {
 		}
 		return map;
 	}
-
+	String peth = "";
 	public void saveMysqlHost(Config body) {
 		Gson gson = new Gson();
-		try (Writer writer = Files.newBufferedWriter(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
+		peth = body.getpath();
+		File pathLocation = new File(peth+"\\Backup");
+		if(!pathLocation.isDirectory()) {
+			pathLocation.mkdirs();
+		}
+		try (Writer writer = Files.newBufferedWriter(Paths.get( body.getpath()+ "\\Backup\\mysql.json"))) {
 			gson.toJson(body, writer);
 			writer.close();
 		} catch (JsonIOException e) {
@@ -583,7 +591,7 @@ public class AppService {
 
 	public Config getMysqlHost() {
 		Config config = null;
-		try (Reader reader = Files.newBufferedReader(Paths.get(backupPath + "\\Backup\\mysql.json"))) {
+		try (Reader reader = Files.newBufferedReader(Paths.get(peth + "\\Backup\\mysql.json"))) {
 			Gson gson = new Gson();
 			config = gson.fromJson(reader, Config.class);
 		} catch (IOException e) {
@@ -591,4 +599,14 @@ public class AppService {
 		}
 		return config;
 	}
+	
+	public void savePath(String path) {
+		
+		pathLocation = path;
+		
+		System.out.println(pathLocation);
+	}
+	
+	
+	
 }

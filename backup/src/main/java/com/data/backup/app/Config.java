@@ -4,6 +4,14 @@ public class Config {
 	private String user = "";
 	private String pass = "";
 	private String host = "";
+	private String path = "";
+	
+	public String getpath() {
+		return path;
+	}
+	public void setpath(String path) {
+		this.path = path;
+	}
 	public String getUser() {
 		return user;
 	}
