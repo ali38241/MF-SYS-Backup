@@ -6,16 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/")
@@ -23,7 +23,6 @@ import jakarta.websocket.server.PathParam;
 public class AppController {
 	
 	private AppService appService;
-//	Config config = appService.getMongoHost();
 
 	public AppController(AppService appService) {
 		this.appService = appService;
@@ -76,8 +75,16 @@ public class AppController {
 
 	}
 	@GetMapping("/sql/getMysqlHost")
-	public Config getMysqlHost() {
-		return appService.getMysqlHost();
+	public ResponseEntity<?> getMysqlHostEndPoint() {
+		
+		try {
+	        Config config = appService.getMysqlHost();
+	        return ResponseEntity.ok(config);
+	    } catch (IllegalStateException e) {
+	    	String errorMessage = "Please create a config file first";
+	    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
+	    }
+
 	}
 
 //	----------------------------------------- Restore DataBase----------------------------------
@@ -127,18 +134,6 @@ public class AppController {
 		public void saveMysqlHost(@RequestBody Config body) {
 			appService.saveMysqlHost(body);
 		}
-	 
-	 @GetMapping("/sql/getname")
-	 public Config con() {
-		return appService.getMysqlHost();
-		 
-	 }
-	 
-	 @GetMapping("sql/savePath/{path}")
-	    public void savePath(@RequestParam String path) {
-	        appService.savePath(path);
-	    }
-	 
 	 
 }
 
