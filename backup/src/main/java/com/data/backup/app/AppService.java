@@ -1,10 +1,12 @@
 package com.data.backup.app;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
@@ -30,6 +32,10 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoIterable;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.CompressionLevel;
+import net.lingala.zip4j.model.enums.EncryptionMethod;
 
 @Service
 public class AppService {
@@ -61,9 +67,7 @@ public class AppService {
 //-------------------- ------------Backup Mongo Databases----------------------------------
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
-		System.out.println(config.getPath()+"111");
-		System.out.println(config.getPath()+"222");
-		
+
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
@@ -156,7 +160,11 @@ public class AppService {
 		Map<Integer, String> map = new HashMap<>();
 		int i = 1;
 		for (String name : list) {
-			map.put(i++, name);
+			if (name.contentEquals("admin") || name.contentEquals("config") || name.contains("local"))
+				continue;
+			else {
+				map.put(i++, name);
+			}
 		}
 		return map;
 
@@ -207,6 +215,12 @@ public class AppService {
 		byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ZipOutputStream zos = new ZipOutputStream(baos);
+//		String zFileName = "backup_" + date + ".zip";
+//		ZipParameters zParam = new ZipParameters();
+//		zParam.setEncryptFiles(true);
+//		zParam.setCompressionLevel(CompressionLevel.HIGHER);
+//		zParam.setEncryptionMethod(EncryptionMethod.AES);
+
 		File directory = new File(config.getPath() + "\\Backup\\Mongo\\" + date);
 		if (directory.isDirectory()) {
 			String zipFileName = "backup_" + date + ".zip";
@@ -280,6 +294,8 @@ public class AppService {
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String backupPathSql;
+	private String sqlCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe";
+	private String sqlDumpCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe";
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -314,14 +330,15 @@ public class AppService {
 		}
 
 		if (backupFolderName()) {
-			System.out.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
+			System.out
+					.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
 
 		}
 		boolean i;
 
 		List<Map<String, String>> backupList = new ArrayList<>();
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
+		ProcessBuilder pb = new ProcessBuilder(sqlCommand, "-u" + config.getUser(), "-p" + config.getPass(), "-h",
+				config.getHost(), "-e", "show databases;");
 		try {
 
 			Process p = pb.start();
@@ -337,8 +354,7 @@ public class AppService {
 					}
 				}
 				if (found) {
-					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
+					String command = String.format("%s -h%s -u%s  -p%s --databases %s -r %S", sqlDumpCommand,
 							config.getHost(), config.getUser(), config.getPass(), x,
 							backupPathSql + File.separator + x);
 
@@ -372,20 +388,26 @@ public class AppService {
 
 //	-----------------------------------restore databases----------------------
 
-	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
+	public boolean restoreDatabase(String date, ArrayList<String> dbname) throws IOException {
 		Config config = getMysqlHost();
+		BufferedReader errorReader = null;
 		boolean i = false;
 		try {
 			for (String x : dbname) {
-				String command = String.format(
-						"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-						config.getUser(), config.getPass(),
+				String command = String.format("%s -u%s -p%s -e \"source %S\"", sqlCommand, config.getUser(),
+						config.getPass(),
 						config.getPath() + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
 				Process process = Runtime.getRuntime().exec(command);
+		        errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
 				process.waitFor();
 				i = process.exitValue() == 0;
 			}
 		} catch (Exception e) {
+			String errorLine = "";
+			while((errorLine = errorReader.readLine())!=null) {
+				System.err.println(errorLine);
+			}
 			System.out.println("An Error occurred While performing the backup: " + e.getMessage());
 		}
 		return i;
@@ -393,37 +415,60 @@ public class AppService {
 
 //	------------------------------------- show all databases-----------------------------------
 
-	public Map<Integer, String> viewall() {
-		Config config = getMysqlHost();
-
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
-
-		Map<Integer, String> result = new HashMap<>();
-		try {
-			Process p = pb.start();
-			String output = new String(p.getInputStream().readAllBytes());
-			String[] lines = output.split("\n");
-			int i = 1;
-			for (String line : lines) {
-				String[] parts = line.split("\t");
-				if (parts.length > 0) {
-					result.put(i++, parts[0].replaceAll("\r", ""));
-				}
-			}
-			int exitCode = p.waitFor();
-
-			if (exitCode == 0) {
-				System.out.println("Shown.");
-			} else {
-				System.err.println("Error showing");
-			}
-		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
-		}
-		System.out.print(result);
-		return result;
+	public Map<Integer, String> viewAll() {
+	    Config config = getMysqlHost();
+	    ProcessBuilder pb = new ProcessBuilder(sqlCommand, "-u" + config.getUser(), "-p" + config.getPass(), "-h",
+	            config.getHost(), "-e", "show databases;");
+	    
+	    Map<Integer, String> result = new HashMap<>();
+	    try {
+	        Process p = pb.start();
+	        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	        BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+	        String line;
+	        int i = 1;
+	        
+	        while ((line = reader.readLine()) != null) {
+	            String databaseName = line.trim();
+	            
+	            if (shouldExclude(databaseName)) {
+	                continue;
+	            }
+	            
+	            result.put(i++, databaseName);
+	        }
+	        
+	        int exitCode = p.waitFor();
+	        
+	        if (exitCode == 0) {
+	            System.out.println("Shown.");
+	        } else {
+	            System.err.println("Error showing:");
+	            String errorLine;
+	            while ((errorLine = errorReader.readLine()) != null) {
+	                System.err.println(errorLine);
+	            }
+	        }
+	        
+	    } catch (IOException | InterruptedException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return result;
 	}
+
+	private boolean shouldExclude(String databaseName) {
+	    return databaseName.equals("information_schema") ||
+	           databaseName.equals("performance_schema") ||
+	           databaseName.equals("mysql") ||
+	           databaseName.equals("sys")||
+	           databaseName.equals("Database")
+	           ;
+	}
+
+
+
+
 
 //	--------------------------Zip files sql-------------------
 
@@ -431,7 +476,7 @@ public class AppService {
 		byte[] buffer = new byte[1024];
 		Config config = getMysqlHost();
 		String zipFileName = "backup_" + "_" + date + ".zip";
-		File backupFolder = new File(config.getPath()+File.separator+"/Backup/Mysql"+File.separator+date);
+		File backupFolder = new File(config.getPath() + File.separator + "/Backup/Mysql" + File.separator + date);
 		System.out.println(backupFolder.toString());
 		if (!backupFolder.exists()) {
 			throw new FileNotFoundException("Backup folder not found for date " + date);
@@ -473,7 +518,7 @@ public class AppService {
 	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
 		Map<String, List<String>> map = new HashMap<>();
 		Config config = getMysqlHost();
-		File folder = new File(config.getPath()+"/Backup/Mysql/");
+		File folder = new File(config.getPath() + "/Backup/Mysql/");
 		System.out.println(folder.toString());
 		if (!folder.exists()) {
 			throw new FileNotFoundException("Folder " + foldername + " does not exist");

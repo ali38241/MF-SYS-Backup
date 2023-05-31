@@ -34,7 +34,7 @@ public class AppController {
 		return appService.backup(dbName);
 	}
 	@GetMapping("/mongo/restore/{date}/{dbName}")
-	public String restore(@PathVariable String date, @PathVariable ArrayList<String> dbName) {
+	public String restore(@PathVariable String date, @PathVariable ArrayList<String> dbName) throws InterruptedException {
 		return appService.restore(date, dbName);
 	}
 
@@ -90,7 +90,7 @@ public class AppController {
 //	----------------------------------------- Restore DataBase----------------------------------
 
 	@GetMapping("/sql/restore/{date}/{dbname}")
-	public String restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname){
+	public String restoreDatabase(@PathVariable String date,@PathVariable ArrayList<String> dbname) throws IOException{
 		boolean success = appService.restoreDatabase(date,dbname);
 		if(success) {
 			String x = "restore successfully done";
@@ -106,7 +106,7 @@ public class AppController {
 //	-------------------------- Showing all Databases--------------------
 	 @GetMapping("/sql/alldatabases")
 		public Map<Integer, String> showall() {
-	        Map<Integer, String> result = appService.viewall();
+	        Map<Integer, String> result = appService.viewAll();
 			return result;
 	    }
 	 
