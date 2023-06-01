@@ -9,9 +9,12 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,9 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.data.backup.EncryptionUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.mongodb.client.MongoClient;
@@ -280,6 +286,7 @@ public class AppService {
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String backupPathSql;
+	private String oldFolderPath = getMysqlHost().getPath()+ "\\Backup\\Mysql";
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -363,13 +370,53 @@ public class AppService {
 					System.out.println("Database '" + x + "' does not exist ");
 				}
 			}
+			
+			deleteOldBackupFolders(oldFolderPath);
+			
 		} catch (Exception e) {
 			System.out.println("An error occurred while performing the backup: " + e.getMessage());
 			sqlBackupFolder.delete();
 		}
 		return backupList;
 	}
+	
+	
+	
+//	------------------------------ Deleting old Databases Function--------------
+	
+	public void deleteOldBackupFolders(String backupFolderPath) {
+	    File[] backupFolders = new File(backupFolderPath).listFiles();
+	    LocalDateTime today = LocalDateTime.now();
 
+	    for (File backupFolder : backupFolders) {
+	        if (backupFolder.isDirectory()) {
+	            String folderName = backupFolder.getName();
+	            LocalDateTime folderDateTime = LocalDateTime.parse(folderName, DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss"));
+	            long daysDifference = ChronoUnit.DAYS.between(folderDateTime.toLocalDate(), today.toLocalDate());
+	            if (daysDifference > 14) {
+	            	deleteFolder(backupFolder);
+	                System.out.println("Deleted backup folder: " + backupFolder.getName());
+	            }
+	        }
+	    }
+	}
+
+	private void deleteFolder(File folder) {
+	    File[] files = folder.listFiles();
+	    if (files != null) {
+	        for (File file : files) {
+	            if (file.isDirectory()) {
+	                deleteFolder(file);
+	            } else {
+	                file.delete();
+	            }
+	        }
+	    }
+	    folder.delete();
+	}
+	
+	
+	
 //	-----------------------------------restore databases----------------------
 
 	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
@@ -501,12 +548,16 @@ public class AppService {
 	}
 
 	public String saveMysqlHost(Config body) {
+		
 		Gson gson = new Gson();
 		File pathLocation = new File(configPath);
 		if (!pathLocation.exists()) {
 			pathLocation.mkdirs();
 		}
+		String encryptedPassword = EncryptionUtil.encryptPassword(body.getPass());
+		body.setPass(encryptedPassword);
 		String x = configPath + File.separator + "mysql.json";
+		
 		try (Writer writer = Files.newBufferedWriter(Paths.get(x))) {
 			gson.toJson(body, writer);
 		} catch (JsonIOException e) {
@@ -522,10 +573,13 @@ public class AppService {
 		try (Reader reader = Files.newBufferedReader(Paths.get(configPath + File.separator + "mysql.json"))) {
 			Gson gson = new Gson();
 			config = gson.fromJson(reader, Config.class);
+			String decryptedPass = EncryptionUtil.decryptPassword(config.getPass());
+			config.setPass(decryptedPass);
 			return config;
 		} catch (IOException e) {
 			throw new IllegalStateException("Sql config not found. Please save a config first");
 		}
 	}
-
+	
+	
 }
