@@ -32,10 +32,6 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoIterable;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.model.enums.CompressionLevel;
-import net.lingala.zip4j.model.enums.EncryptionMethod;
 
 @Service
 public class AppService {
@@ -115,17 +111,19 @@ public class AppService {
 	}
 
 	// -----------------------------Restore Mongo Databases----------------------
-	public String restore(String date, ArrayList<String> dbName) {
+	public String restore(String date, ArrayList<String> dbName) throws InterruptedException {
 		Config config = getMongoHost();
 		String path = config.getPath() + "\\Backup\\Mongo" + File.separator + date;
 		File file = new File(path);
+		Thread waitForThread = new Thread();
 		if (file.exists()) {
 			for (String db : dbName) {
+				
 				ProcessBuilder pb = new ProcessBuilder("mongorestore", "-d", db, path + File.separator + db);
 				try {
 					Process p = pb.start();
 
-					Thread waitForThread = new Thread(() -> {
+					waitForThread = new Thread(() -> {
 						try {
 							int exitCode = p.waitFor();
 							if (exitCode == 0) {
@@ -137,12 +135,13 @@ public class AppService {
 							e.printStackTrace();
 						}
 					});
-					waitForThread.start();
-
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
+			waitForThread.start();
+			waitForThread.stop();
 			return "";
 
 		} else {
@@ -215,11 +214,6 @@ public class AppService {
 		byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ZipOutputStream zos = new ZipOutputStream(baos);
-//		String zFileName = "backup_" + date + ".zip";
-//		ZipParameters zParam = new ZipParameters();
-//		zParam.setEncryptFiles(true);
-//		zParam.setCompressionLevel(CompressionLevel.HIGHER);
-//		zParam.setEncryptionMethod(EncryptionMethod.AES);
 
 		File directory = new File(config.getPath() + "\\Backup\\Mongo\\" + date);
 		if (directory.isDirectory()) {
