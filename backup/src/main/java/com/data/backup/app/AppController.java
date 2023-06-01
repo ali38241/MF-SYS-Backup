@@ -135,6 +135,11 @@ public class AppController {
 			appService.saveMysqlHost(body);
 		}
 	 
+	 @GetMapping("sql/getname")
+	 public Config getMysqlHost() {
+		 return appService.getMysqlHost();
+	 }
+	 
 }
 
 
