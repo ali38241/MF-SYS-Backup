@@ -69,13 +69,8 @@ public class AppService {
 
 //-------------------- ------------Backup Mongo Databases----------------------------------
 
-
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
-		System.out.println(config.getPath() + "111");
-		System.out.println(config.getPath() + "222");
-		
-		
 
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
@@ -120,11 +115,11 @@ public class AppService {
 				backupFolder.delete();
 			}
 		}
-		
+
 		File[] file = new File(oldFolderspath).listFiles();
 		if (file != null) {
-		deleteOldBackupFolders(oldFolderspath);
-	}
+			deleteOldBackupFolders(oldFolderspath);
+		}
 		return backupList;
 	}
 
@@ -164,7 +159,8 @@ public class AppService {
 		}
 	}
 
-	// ------------------------------Display All Mongo Databases----------------------
+	// ------------------------------Display All Mongo
+	// Databases----------------------
 	public Map<Integer, String> showAll() {
 		Config config = getMongoHost();
 		String host = "mongodb://" + config.getHost();
@@ -349,14 +345,15 @@ public class AppService {
 		}
 
 		if (backupFolderName()) {
-			System.out.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
+			System.out
+					.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
 
 		}
 		boolean i;
 
 		List<Map<String, String>> backupList = new ArrayList<>();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" +EncryptionUtil.decryptPassword(config.getPass()), "-h",
+				"-u" + config.getUser(), "-p" + EncryptionUtil.decryptPassword(config.getPass()), "-h",
 				config.getHost(), "-e", "show databases;");
 		try {
 
@@ -375,13 +372,13 @@ public class AppService {
 				if (found) {
 					String command = String.format(
 							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -h %s -u%s  -p%s --databases %s -r %S",
-							config.getHost(), config.getUser(),EncryptionUtil.decryptPassword(config.getPass()), x,
+							config.getHost(), config.getUser(), EncryptionUtil.decryptPassword(config.getPass()), x,
 							backupPathSql + "/" + x);
 
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
-					
+
 					i = process.exitValue() == 0;
 					if (i) {
 						map.put("database", x);
@@ -400,8 +397,8 @@ public class AppService {
 					System.out.println("Database '" + x + "' does not exist ");
 				}
 			}
-				File[] file = new File(oldFolderPath).listFiles();
-				if (file != null) {
+			File[] file = new File(oldFolderPath).listFiles();
+			if (file != null) {
 				deleteOldBackupFolders(oldFolderPath);
 			}
 
@@ -412,8 +409,6 @@ public class AppService {
 		}
 		return backupList;
 	}
-
-
 
 //	-----------------------------------restore databases----------------------
 
@@ -438,62 +433,54 @@ public class AppService {
 
 //	------------------------------------- show all databases-----------------------------------
 
-
 	public Map<Integer, String> viewAll() {
-	    Config config = getMysqlHost();
-	    ProcessBuilder pb = new ProcessBuilder(sqlCommand, "-u" + config.getUser(), "-p" +EncryptionUtil.decryptPassword(config.getPass()), "-h",
-	            config.getHost(), "-e", "show databases;");
-	    
-	    Map<Integer, String> result = new HashMap<>();
-	    try {
-	        Process p = pb.start();
-	        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-	        BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-	        String line;
-	        int i = 1;
-	        
-	        while ((line = reader.readLine()) != null) {
-	            String databaseName = line.trim();
-	            
-	            if (shouldExclude(databaseName)) {
-	                continue;
-	            }
-	            
-	            result.put(i++, databaseName);
-	        }
-	        
-	        int exitCode = p.waitFor();
-	        
-	        if (exitCode == 0) {
-	            System.out.println("Shown.");
-	        } else {
-	            System.err.println("Error showing:");
-	            String errorLine;
-	            while ((errorLine = errorReader.readLine()) != null) {
-	                System.err.println(errorLine);
-	            }
-	        }
-	        
-	    } catch (IOException | InterruptedException e) {
-	        e.printStackTrace();
-	    }
-	    
-	    return result;
+		Config config = getMysqlHost();
+		ProcessBuilder pb = new ProcessBuilder(sqlCommand, "-u" + config.getUser(),
+				"-p" + EncryptionUtil.decryptPassword(config.getPass()), "-h", config.getHost(), "-e",
+				"show databases;");
+
+		Map<Integer, String> result = new HashMap<>();
+		try {
+			Process p = pb.start();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			String line;
+			int i = 1;
+
+			while ((line = reader.readLine()) != null) {
+				String databaseName = line.trim();
+
+				if (shouldExclude(databaseName)) {
+					continue;
+				}
+
+				result.put(i++, databaseName);
+			}
+
+			int exitCode = p.waitFor();
+
+			if (exitCode == 0) {
+				System.out.println("Shown.");
+			} else {
+				System.err.println("Error showing:");
+				String errorLine;
+				while ((errorLine = errorReader.readLine()) != null) {
+					System.err.println(errorLine);
+				}
+			}
+
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		return result;
 	}
-	
-	
+
 	private boolean shouldExclude(String databaseName) {
-	    return databaseName.equals("information_schema") ||
-	           databaseName.equals("performance_schema") ||
-	           databaseName.equals("mysql") ||
-	           databaseName.equals("sys")||
-	           databaseName.equals("Database")
-	           ;
+		return databaseName.equals("information_schema") || databaseName.equals("performance_schema")
+				|| databaseName.equals("mysql") || databaseName.equals("sys") || databaseName.equals("Database");
 	}
-	
-	
-	
-	
+
 //	--------------------------Zip files sql-------------------
 
 	public void createzipfile(String date) throws IOException {
@@ -568,7 +555,7 @@ public class AppService {
 		}
 		return map;
 	}
-	
+
 //	-------------------------------- Saving IP -----------------------------
 
 	public String saveMysqlHost(Config body) {
@@ -591,7 +578,7 @@ public class AppService {
 		}
 		return x;
 	}
-	
+
 //	------------------------------ Reading IP function ----------------------------
 
 	public Config getMysqlHost() {
@@ -614,9 +601,8 @@ public class AppService {
 		}
 	}
 
-	
 //	------------------------------ Dummy values for config file Function ----------------------
-	
+
 	private Config createDummyConfig() {
 		// Create a dummy config with some default values
 		Config dummyConfig = new Config();
@@ -626,8 +612,7 @@ public class AppService {
 		dummyConfig.setPath("dummy value");
 		return dummyConfig;
 	}
-	
-	
+
 //	------------------------------ Deleting old Databases Function--------------
 
 	public void deleteOldBackupFolders(String backupFolderPath) {
