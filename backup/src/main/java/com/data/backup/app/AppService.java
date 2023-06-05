@@ -9,9 +9,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -41,7 +39,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AppService {
 
 	// ----------------------------------Mongo--------------------------------------------
-	private final String configPath = System.getProperty("user.home") + "//Documents//BackupConfig";
+	private final String configPath = System.getProperty("user.home") + "/Documents/BackupConfig";
 	private int port = 27017;
 	private String backupFolderName;
 	private String backupFolderPath;
@@ -55,7 +53,7 @@ public class AppService {
 	public Boolean createBackupFolder() {
 		Config config = getMongoHost();
 		backupFolderName = getBackupName();
-		backupFolderPath = config.getPath() + "\\Backup\\Mongo" + File.separator + backupFolderName;
+		backupFolderPath = config.getPath() + "/Backup/Mongo" + File.separator + backupFolderName;
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
 			backupFolder.mkdir();
@@ -67,9 +65,9 @@ public class AppService {
 //-------------------- ------------Backup Mongo Databases----------------------------------
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
-		System.out.println(config.getPath()+"111");
-		System.out.println(config.getPath()+"222");
-		
+		System.out.println(config.getPath() + "111");
+		System.out.println(config.getPath() + "222");
+
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
@@ -78,6 +76,7 @@ public class AppService {
 			return backupList; // Return empty list if folder creation failed
 
 		}
+		System.out.println(EncryptionUtil.decryptPassword(config.getPass())+"::::hahahaha");
 		String host = "mongodb://" + config.getHost();
 		MongoClient mongo = MongoClients.create(host);
 		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
@@ -90,7 +89,7 @@ public class AppService {
 			map.put("Database", db);
 			map.put("Date", backupFolderName);
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
-					config.getUser(), "--password", config.getPass(), "--db", db, "--host", config.getHost(), "--port",
+					config.getUser(), "--password", EncryptionUtil.decryptPassword(config.getPass()), "--db", db, "--host", config.getHost(), "--port",
 					String.valueOf(port), "--out", backupFolderPath);
 			try {
 				Process p = pb.start();
@@ -261,6 +260,8 @@ public class AppService {
 		}
 		try (Writer writer = Files.newBufferedWriter(Paths.get(configPath + "\\mongo.json"))) {
 			Gson gson = new Gson();
+			String encPass = EncryptionUtil.encryptPassword(body.getPass());
+			body.setPass(encPass);
 			gson.toJson(body, writer);
 			writer.close();
 		} catch (JsonIOException e) {
@@ -286,7 +287,7 @@ public class AppService {
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String backupPathSql;
-	private String oldFolderPath = getMysqlHost().getPath()+ "\\Backup\\Mysql";
+	private String oldFolderPath = getMysqlHost().getPath() + "\\Backup\\Mysql";
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -321,7 +322,8 @@ public class AppService {
 		}
 
 		if (backupFolderName()) {
-			System.out.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
+			System.out
+					.println("Folder created successfully with name: " + sqlbackUpFolderName + " in " + backupPathSql);
 
 		}
 		boolean i;
@@ -370,53 +372,50 @@ public class AppService {
 					System.out.println("Database '" + x + "' does not exist ");
 				}
 			}
-			
+
 			deleteOldBackupFolders(oldFolderPath);
-			
+
 		} catch (Exception e) {
 			System.out.println("An error occurred while performing the backup: " + e.getMessage());
 			sqlBackupFolder.delete();
 		}
 		return backupList;
 	}
-	
-	
-	
-//	------------------------------ Deleting old Databases Function--------------
-	
-	public void deleteOldBackupFolders(String backupFolderPath) {
-	    File[] backupFolders = new File(backupFolderPath).listFiles();
-	    LocalDateTime today = LocalDateTime.now();
 
-	    for (File backupFolder : backupFolders) {
-	        if (backupFolder.isDirectory()) {
-	            String folderName = backupFolder.getName();
-	            LocalDateTime folderDateTime = LocalDateTime.parse(folderName, DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss"));
-	            long daysDifference = ChronoUnit.DAYS.between(folderDateTime.toLocalDate(), today.toLocalDate());
-	            if (daysDifference > 14) {
-	            	deleteFolder(backupFolder);
-	                System.out.println("Deleted backup folder: " + backupFolder.getName());
-	            }
-	        }
-	    }
+//	------------------------------ Deleting old Databases Function--------------
+
+	public void deleteOldBackupFolders(String backupFolderPath) {
+		File[] backupFolders = new File(backupFolderPath).listFiles();
+		LocalDateTime today = LocalDateTime.now();
+
+		for (File backupFolder : backupFolders) {
+			if (backupFolder.isDirectory()) {
+				String folderName = backupFolder.getName();
+				LocalDateTime folderDateTime = LocalDateTime.parse(folderName,
+						DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss"));
+				long daysDifference = ChronoUnit.DAYS.between(folderDateTime.toLocalDate(), today.toLocalDate());
+				if (daysDifference > 14) {
+					deleteFolder(backupFolder);
+					System.out.println("Deleted backup folder: " + backupFolder.getName());
+				}
+			}
+		}
 	}
 
 	private void deleteFolder(File folder) {
-	    File[] files = folder.listFiles();
-	    if (files != null) {
-	        for (File file : files) {
-	            if (file.isDirectory()) {
-	                deleteFolder(file);
-	            } else {
-	                file.delete();
-	            }
-	        }
-	    }
-	    folder.delete();
+		File[] files = folder.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				if (file.isDirectory()) {
+					deleteFolder(file);
+				} else {
+					file.delete();
+				}
+			}
+		}
+		folder.delete();
 	}
-	
-	
-	
+
 //	-----------------------------------restore databases----------------------
 
 	public boolean restoreDatabase(String date, ArrayList<String> dbname) {
@@ -478,7 +477,7 @@ public class AppService {
 		byte[] buffer = new byte[1024];
 		Config config = getMysqlHost();
 		String zipFileName = "backup_" + "_" + date + ".zip";
-		File backupFolder = new File(config.getPath()+File.separator+"/Backup/Mysql"+File.separator+date);
+		File backupFolder = new File(config.getPath() + File.separator + "/Backup/Mysql" + File.separator + date);
 		System.out.println(backupFolder.toString());
 		if (!backupFolder.exists()) {
 			throw new FileNotFoundException("Backup folder not found for date " + date);
@@ -520,7 +519,7 @@ public class AppService {
 	public Map<String, List<String>> getBackupFileNames(String foldername) throws FileNotFoundException {
 		Map<String, List<String>> map = new HashMap<>();
 		Config config = getMysqlHost();
-		File folder = new File(config.getPath()+"/Backup/Mysql/");
+		File folder = new File(config.getPath() + "/Backup/Mysql/");
 		System.out.println(folder.toString());
 		if (!folder.exists()) {
 			throw new FileNotFoundException("Folder " + foldername + " does not exist");
@@ -548,7 +547,7 @@ public class AppService {
 	}
 
 	public String saveMysqlHost(Config body) {
-		
+
 		Gson gson = new Gson();
 		File pathLocation = new File(configPath);
 		if (!pathLocation.exists()) {
@@ -557,7 +556,7 @@ public class AppService {
 		String encryptedPassword = EncryptionUtil.encryptPassword(body.getPass());
 		body.setPass(encryptedPassword);
 		String x = configPath + File.separator + "mysql.json";
-		
+
 		try (Writer writer = Files.newBufferedWriter(Paths.get(x))) {
 			gson.toJson(body, writer);
 		} catch (JsonIOException e) {
@@ -580,6 +579,5 @@ public class AppService {
 			throw new IllegalStateException("Sql config not found. Please save a config first");
 		}
 	}
-	
-	
+
 }
