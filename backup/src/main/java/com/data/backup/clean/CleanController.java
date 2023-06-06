@@ -1,5 +1,6 @@
 package com.data.backup.clean;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,13 @@ public class CleanController {
 	}
 	@GetMapping("/mongo/showCollections/{col}")
 	public List<String> showMongoTables(@PathVariable String col){
-		return cleanService.showMongoTables(col);
+		return cleanService.showMongoCollections(col);
 	}
+	
+	@PostMapping("/mongo/clean/{dbName}/{requiredOrganization}")
+	public void cleanMongo(@PathVariable String dbName,@PathVariable String requiredOrganization) throws IOException {
+		 cleanService.clean(requiredOrganization, dbName);
+	}
+	
+	 
 }
