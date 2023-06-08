@@ -11,9 +11,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -43,7 +41,8 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AppService {
 
 	// ----------------------------------Mongo--------------------------------------------
-	private final String configPath = System.getProperty("user.home") + "\\Documents\\BackupConfig";
+	
+	private final String configPath = System.getProperty("user.home") + "/Documents/BackupConfig";
 	private int port = 27017;
 	private String backupFolderName;
 	private String backupFolderPath;
@@ -58,7 +57,7 @@ public class AppService {
 	public Boolean createBackupFolder() {
 		Config config = getMongoHost();
 		backupFolderName = getBackupName();
-		backupFolderPath = config.getPath() + "\\Backup\\Mongo" + File.separator + backupFolderName;
+		backupFolderPath = config.getPath() + "/Backup/Mongo" + File.separator + backupFolderName;
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
 			backupFolder.mkdirs();
@@ -71,7 +70,6 @@ public class AppService {
 
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
-
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
@@ -80,6 +78,7 @@ public class AppService {
 			return backupList; // Return empty list if folder creation failed
 
 		}
+		System.out.println(EncryptionUtil.decryptPassword(config.getPass())+"::::hahahaha");
 		String host = "mongodb://" + config.getHost();
 		MongoClient mongo = MongoClients.create(host);
 		List<String> existingDbs = mongo.listDatabaseNames().into(new ArrayList<>());
@@ -274,6 +273,8 @@ public class AppService {
 		body.setPass(encryptedPassword);
 		try (Writer writer = Files.newBufferedWriter(Paths.get(configPath + "\\mongo.json"))) {
 			Gson gson = new Gson();
+			String encPass = EncryptionUtil.encryptPassword(body.getPass());
+			body.setPass(encPass);
 			gson.toJson(body, writer);
 			writer.close();
 		} catch (JsonIOException e) {
@@ -311,6 +312,7 @@ public class AppService {
 	private String oldFolderPath = getMysqlHost().getPath() + "/Backup/Mysql";
 	private String sqlCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe";
 	private String sqlDumpCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe";
+
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -409,6 +411,7 @@ public class AppService {
 		}
 		return backupList;
 	}
+
 
 //	-----------------------------------restore databases----------------------
 

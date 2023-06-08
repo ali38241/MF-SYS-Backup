@@ -9,12 +9,16 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.data.backup.app.AppService;
+import com.data.backup.app.Config;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
@@ -26,8 +30,10 @@ import jakarta.transaction.Transactional;
 public class CleanService {
 	@Autowired
 	private JdbcTemplate jdbctemp;
+
 	@PersistenceContext
 	private EntityManager entityManager;
+
 
 	public List<String> showSqlTables(String db) {
 		List<String> tableName = jdbctemp.queryForList("SHOW TABLES IN " + db, String.class);
@@ -47,6 +53,7 @@ public class CleanService {
 		}
 	}
 
+
 	public List<String> showMongoTables(String col) {
 		MongoClient mongo = MongoClients.create();
 		MongoDatabase db = mongo.getDatabase(col);
@@ -59,6 +66,25 @@ public class CleanService {
 		return collName;
 
 	}
+
+	
+	public void clean(String requiredOrganization, String dbName) {
+		try (MongoClient client = MongoClients.create()) {
+			MongoDatabase database = client.getDatabase(dbName);
+			for (String collName : database.listCollectionNames()) {
+				MongoCollection<Document> collection = database.getCollection(collName);
+				for (Document obj : collection.find()) {
+					String orgacode = obj.getString("POR_ORGACODE");
+					if (orgacode != null && orgacode.equals(requiredOrganization)) {
+						System.out.println(database + " DB -> Deleting records of " + orgacode + " From collection ["
+								+ collName + "] having ID --> [" + obj.get("_id") + "]");
+						collection.deleteOne(obj);
+					}
+				}
+			}
+		}
+	}
+
 
 	@Transactional
 	public void deleteSpecialRow(String databaseName, String organizationCode) {
@@ -137,5 +163,6 @@ public class CleanService {
 
 	
 	
+
 
 }

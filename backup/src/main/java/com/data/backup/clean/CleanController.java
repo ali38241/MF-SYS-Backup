@@ -1,5 +1,6 @@
 package com.data.backup.clean;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +28,14 @@ public class CleanController {
 	public void deleteSqlData(@PathVariable ArrayList<String> tableName) {
 		cleanService.deleteSqlData(tableName);
 	}
-	@GetMapping("/mongo/showCollections/{col}")
-	public List<String> showMongoTables(@PathVariable String col){
-		return cleanService.showMongoTables(col);
+	
+	@PostMapping("/mongo/clean/{dbName}/{requiredOrganization}")
+	public void cleanMongo(@PathVariable String dbName,@PathVariable String requiredOrganization) throws IOException {
+		 cleanService.clean(requiredOrganization, dbName);
 	}
 	
+	 
+
 	@GetMapping("/sql/deleteSpecialRow/{databaseName}/{organizationCode}")
 	public void deleteSpecialRow(@PathVariable String databaseName, @PathVariable String organizationCode) {
 		cleanService.deleteSpecialRow(databaseName,organizationCode);
@@ -41,7 +45,6 @@ public class CleanController {
 	public void deleteRestOfRow(@PathVariable String databaseName, @PathVariable String organizationCode) {
 		cleanService.deleteRestOfRow(databaseName,organizationCode);
 	}
-	
 	
 	
 }
