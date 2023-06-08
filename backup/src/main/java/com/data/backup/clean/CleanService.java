@@ -75,7 +75,6 @@ public class CleanService {
 			Statement disableConstraintsStmt = connection.createStatement();
 			disableConstraintsStmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
 			while (tableResultSet.next()) {
-				System.out.println(tableResultSet);
 				String tableName = tableResultSet.getString("TABLE_NAME");
 				if (columnExists(connection, tableName, columnName)) {
 					String deleteQuery = "DELETE FROM " + tableName + " WHERE " + columnName + " = ?";
@@ -87,8 +86,9 @@ public class CleanService {
 				} else {
 					System.out.println("Column does not exist in the table: " + tableName);
 				}
-				disableConstraintsStmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
+				
 			}
+			disableConstraintsStmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
