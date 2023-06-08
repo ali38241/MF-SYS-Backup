@@ -28,10 +28,6 @@ public class CleanController {
 	public void deleteSqlData(@PathVariable ArrayList<String> tableName) {
 		cleanService.deleteSqlData(tableName);
 	}
-	@GetMapping("/mongo/showCollections/{col}")
-	public List<String> showMongoTables(@PathVariable String col){
-		return cleanService.showMongoCollections(col);
-	}
 	
 	@PostMapping("/mongo/clean/{dbName}/{requiredOrganization}")
 	public void cleanMongo(@PathVariable String dbName,@PathVariable String requiredOrganization) throws IOException {
@@ -39,4 +35,16 @@ public class CleanController {
 	}
 	
 	 
+
+	@GetMapping("/sql/deleteSpecialRow/{databaseName}/{organizationCode}")
+	public void deleteSpecialRow(@PathVariable String databaseName, @PathVariable String organizationCode) {
+		cleanService.deleteSpecialRow(databaseName,organizationCode);
+	}
+	
+	@GetMapping("/sql/deleteRestOfRow/{databaseName}/{organizationCode}")
+	public void deleteRestOfRow(@PathVariable String databaseName, @PathVariable String organizationCode) {
+		cleanService.deleteRestOfRow(databaseName,organizationCode);
+	}
+	
+	
 }

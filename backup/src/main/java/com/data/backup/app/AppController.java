@@ -106,7 +106,7 @@ public class AppController {
 //	-------------------------- Showing all Databases--------------------
 	 @GetMapping("/sql/alldatabases")
 		public Map<Integer, String> showall() {
-	        Map<Integer, String> result = appService.viewall();
+	        Map<Integer, String> result = appService.viewAll();
 			return result;
 	    }
 	 

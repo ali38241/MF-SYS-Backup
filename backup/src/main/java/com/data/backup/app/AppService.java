@@ -1,10 +1,12 @@
 package com.data.backup.app;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
@@ -39,11 +41,13 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AppService {
 
 	// ----------------------------------Mongo--------------------------------------------
+	
 	private final String configPath = System.getProperty("user.home") + "/Documents/BackupConfig";
 	private int port = 27017;
 	private String backupFolderName;
 	private String backupFolderPath;
 	private File backupFolder;
+	private String oldFolderspath = getMongoHost().getPath() + "/Backup/Mongo";
 
 	private String getBackupName() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss");
@@ -56,18 +60,16 @@ public class AppService {
 		backupFolderPath = config.getPath() + "/Backup/Mongo" + File.separator + backupFolderName;
 		backupFolder = new File(backupFolderPath);
 		if (!backupFolder.exists()) {
-			backupFolder.mkdir();
+			backupFolder.mkdirs();
 			return true;
 		}
 		return false;
 	}
 
 //-------------------- ------------Backup Mongo Databases----------------------------------
+
 	public List<Map<String, String>> backup(ArrayList<String> dbName) {
 		Config config = getMongoHost();
-		System.out.println(config.getPath() + "111");
-		System.out.println(config.getPath() + "222");
-
 		List<Map<String, String>> backupList = new ArrayList<>();
 		if (createBackupFolder()) {
 			System.out.println("Folder created with name: " + backupFolderName + " in " + backupFolderPath);
@@ -89,8 +91,8 @@ public class AppService {
 			map.put("Database", db);
 			map.put("Date", backupFolderName);
 			ProcessBuilder pb = new ProcessBuilder("mongodump", "--authenticationDatabase", "test", "--username",
-					config.getUser(), "--password", EncryptionUtil.decryptPassword(config.getPass()), "--db", db, "--host", config.getHost(), "--port",
-					String.valueOf(port), "--out", backupFolderPath);
+					config.getUser(), "--password", EncryptionUtil.decryptPassword(config.getPass()), "--db", db,
+					"--host", config.getHost(), "--port", String.valueOf(port), "--out", backupFolderPath);
 			try {
 				Process p = pb.start();
 				int exitCode = p.waitFor();
@@ -111,6 +113,11 @@ public class AppService {
 				System.out.printf("Error creating backup for: ", db, e);
 				backupFolder.delete();
 			}
+		}
+
+		File[] file = new File(oldFolderspath).listFiles();
+		if (file != null) {
+			deleteOldBackupFolders(oldFolderspath);
 		}
 		return backupList;
 	}
@@ -161,7 +168,11 @@ public class AppService {
 		Map<Integer, String> map = new HashMap<>();
 		int i = 1;
 		for (String name : list) {
-			map.put(i++, name);
+			if (name.contentEquals("admin") || name.contentEquals("config") || name.contains("local"))
+				continue;
+			else {
+				map.put(i++, name);
+			}
 		}
 		return map;
 
@@ -258,6 +269,8 @@ public class AppService {
 		if (!pathLocation.exists()) {
 			pathLocation.mkdirs();
 		}
+		String encryptedPassword = EncryptionUtil.encryptPassword(body.getPass());
+		body.setPass(encryptedPassword);
 		try (Writer writer = Files.newBufferedWriter(Paths.get(configPath + "\\mongo.json"))) {
 			Gson gson = new Gson();
 			String encPass = EncryptionUtil.encryptPassword(body.getPass());
@@ -273,9 +286,18 @@ public class AppService {
 
 	public Config getMongoHost() {
 		Config config = null;
+		String x = configPath + File.separator + "mongo.json";
+		File configlocation = new File(x);
+		if (!configlocation.exists()) {
+			Config dummyConfig = createDummyConfig();
+			saveMongoHost(dummyConfig);
+			return dummyConfig;
+		}
 		try (Reader reader = Files.newBufferedReader(Paths.get(configPath + "\\mongo.json"))) {
 			Gson gson = new Gson();
 			config = gson.fromJson(reader, Config.class);
+//			String decryptedPass = EncryptionUtil.decryptPassword(config.getPass());
+//			config.setPass(decryptedPass);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -287,7 +309,10 @@ public class AppService {
 	private String sqlbackUpFolderName;
 	private File sqlBackupFolder;
 	private String backupPathSql;
-	private String oldFolderPath = getMysqlHost().getPath() + "\\Backup\\Mysql";
+	private String oldFolderPath = getMysqlHost().getPath() + "/Backup/Mysql";
+	private String sqlCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe";
+	private String sqlDumpCommand = "C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe";
+
 
 	public String getCurrentDateTime() {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-YYYY__HH-mm-ss");
@@ -298,7 +323,7 @@ public class AppService {
 	private Boolean backupFolderName() {
 		Config config = getMysqlHost();
 		sqlbackUpFolderName = getCurrentDateTime();
-		backupPathSql = config.getPath() + "\\Backup\\Mysql\\" + sqlbackUpFolderName;
+		backupPathSql = config.getPath() + "/Backup/Mysql/" + sqlbackUpFolderName;
 		sqlBackupFolder = new File(backupPathSql);
 
 		if (!sqlBackupFolder.exists()) {
@@ -330,7 +355,8 @@ public class AppService {
 
 		List<Map<String, String>> backupList = new ArrayList<>();
 		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
+				"-u" + config.getUser(), "-p" + EncryptionUtil.decryptPassword(config.getPass()), "-h",
+				config.getHost(), "-e", "show databases;");
 		try {
 
 			Process p = pb.start();
@@ -347,17 +373,18 @@ public class AppService {
 				}
 				if (found) {
 					String command = String.format(
-							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -h%s -u%s  -p%s --databases %s -r %S",
-							config.getHost(), config.getUser(), config.getPass(), x,
-							backupPathSql + File.separator + x);
+							"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysqldump.exe\" -h %s -u%s  -p%s --databases %s -r %S",
+							config.getHost(), config.getUser(), EncryptionUtil.decryptPassword(config.getPass()), x,
+							backupPathSql + "/" + x);
 
 					Process process = Runtime.getRuntime().exec(command);
 					process.waitFor();
 					Map<String, String> map = new HashMap<>();
-					map.put("database", x);
-					map.put("Date", sqlbackUpFolderName);
+
 					i = process.exitValue() == 0;
 					if (i) {
+						map.put("database", x);
+						map.put("Date", sqlbackUpFolderName);
 						System.out.println("Backup created successfully for: " + x);
 					} else {
 						sqlBackupFolder.delete();
@@ -372,49 +399,19 @@ public class AppService {
 					System.out.println("Database '" + x + "' does not exist ");
 				}
 			}
-
-			deleteOldBackupFolders(oldFolderPath);
+			File[] file = new File(oldFolderPath).listFiles();
+			if (file != null) {
+				deleteOldBackupFolders(oldFolderPath);
+			}
 
 		} catch (Exception e) {
 			System.out.println("An error occurred while performing the backup: " + e.getMessage());
 			sqlBackupFolder.delete();
+			e.printStackTrace();
 		}
 		return backupList;
 	}
 
-//	------------------------------ Deleting old Databases Function--------------
-
-	public void deleteOldBackupFolders(String backupFolderPath) {
-		File[] backupFolders = new File(backupFolderPath).listFiles();
-		LocalDateTime today = LocalDateTime.now();
-
-		for (File backupFolder : backupFolders) {
-			if (backupFolder.isDirectory()) {
-				String folderName = backupFolder.getName();
-				LocalDateTime folderDateTime = LocalDateTime.parse(folderName,
-						DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss"));
-				long daysDifference = ChronoUnit.DAYS.between(folderDateTime.toLocalDate(), today.toLocalDate());
-				if (daysDifference > 14) {
-					deleteFolder(backupFolder);
-					System.out.println("Deleted backup folder: " + backupFolder.getName());
-				}
-			}
-		}
-	}
-
-	private void deleteFolder(File folder) {
-		File[] files = folder.listFiles();
-		if (files != null) {
-			for (File file : files) {
-				if (file.isDirectory()) {
-					deleteFolder(file);
-				} else {
-					file.delete();
-				}
-			}
-		}
-		folder.delete();
-	}
 
 //	-----------------------------------restore databases----------------------
 
@@ -424,8 +421,8 @@ public class AppService {
 		try {
 			for (String x : dbname) {
 				String command = String.format(
-						"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe\" -u%s -p%s -e \"source %S\"",
-						config.getUser(), config.getPass(),
+						"\"C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe\" -u%s -p%s -h %s -e \"source %S\"",
+						config.getUser(), EncryptionUtil.decryptPassword(config.getPass()), config.getHost(),
 						config.getPath() + "\\Backup\\Mysql" + File.separator + date + File.separator + x);
 				Process process = Runtime.getRuntime().exec(command);
 				process.waitFor();
@@ -439,36 +436,52 @@ public class AppService {
 
 //	------------------------------------- show all databases-----------------------------------
 
-	public Map<Integer, String> viewall() {
+	public Map<Integer, String> viewAll() {
 		Config config = getMysqlHost();
-
-		ProcessBuilder pb = new ProcessBuilder("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\mysql.exe",
-				"-u" + config.getUser(), "-p" + config.getPass(), "-h", config.getHost(), "-e", "show databases;");
+		ProcessBuilder pb = new ProcessBuilder(sqlCommand, "-u" + config.getUser(),
+				"-p" + EncryptionUtil.decryptPassword(config.getPass()), "-h", config.getHost(), "-e",
+				"show databases;");
 
 		Map<Integer, String> result = new HashMap<>();
 		try {
 			Process p = pb.start();
-			String output = new String(p.getInputStream().readAllBytes());
-			String[] lines = output.split("\n");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			String line;
 			int i = 1;
-			for (String line : lines) {
-				String[] parts = line.split("\t");
-				if (parts.length > 0) {
-					result.put(i++, parts[0].replaceAll("\r", ""));
+
+			while ((line = reader.readLine()) != null) {
+				String databaseName = line.trim();
+
+				if (shouldExclude(databaseName)) {
+					continue;
 				}
+
+				result.put(i++, databaseName);
 			}
+
 			int exitCode = p.waitFor();
 
 			if (exitCode == 0) {
 				System.out.println("Shown.");
 			} else {
-				System.err.println("Error showing");
+				System.err.println("Error showing:");
+				String errorLine;
+				while ((errorLine = errorReader.readLine()) != null) {
+					System.err.println(errorLine);
+				}
 			}
+
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
-		System.out.print(result);
+
 		return result;
+	}
+
+	private boolean shouldExclude(String databaseName) {
+		return databaseName.equals("information_schema") || databaseName.equals("performance_schema")
+				|| databaseName.equals("mysql") || databaseName.equals("sys") || databaseName.equals("Database");
 	}
 
 //	--------------------------Zip files sql-------------------
@@ -546,6 +559,8 @@ public class AppService {
 		return map;
 	}
 
+//	-------------------------------- Saving IP -----------------------------
+
 	public String saveMysqlHost(Config body) {
 
 		Gson gson = new Gson();
@@ -567,17 +582,72 @@ public class AppService {
 		return x;
 	}
 
+//	------------------------------ Reading IP function ----------------------------
+
 	public Config getMysqlHost() {
+		String x = configPath + File.separator + "mysql.json";
+		File configlocation = new File(x);
+		if (!configlocation.exists()) {
+			Config dummyConfig = createDummyConfig();
+			saveMysqlHost(dummyConfig);
+			return dummyConfig;
+		}
 		Config config = new Config();
 		try (Reader reader = Files.newBufferedReader(Paths.get(configPath + File.separator + "mysql.json"))) {
 			Gson gson = new Gson();
 			config = gson.fromJson(reader, Config.class);
-			String decryptedPass = EncryptionUtil.decryptPassword(config.getPass());
-			config.setPass(decryptedPass);
+//			String decryptedPass = EncryptionUtil.decryptPassword(config.getPass());
+//			config.setPass(decryptedPass);
 			return config;
 		} catch (IOException e) {
 			throw new IllegalStateException("Sql config not found. Please save a config first");
 		}
+	}
+
+//	------------------------------ Dummy values for config file Function ----------------------
+
+	private Config createDummyConfig() {
+		// Create a dummy config with some default values
+		Config dummyConfig = new Config();
+		dummyConfig.setHost("localhost");
+		dummyConfig.setPass("root");
+		dummyConfig.setUser("root");
+		dummyConfig.setPath("dummy value");
+		return dummyConfig;
+	}
+
+//	------------------------------ Deleting old Databases Function--------------
+
+	public void deleteOldBackupFolders(String backupFolderPath) {
+		File[] backupFolders = new File(backupFolderPath).listFiles();
+		LocalDateTime today = LocalDateTime.now();
+
+		for (File backupFolder : backupFolders) {
+			if (backupFolder.isDirectory()) {
+				String folderName = backupFolder.getName();
+				LocalDateTime folderDateTime = LocalDateTime.parse(folderName,
+						DateTimeFormatter.ofPattern("MM-dd-yyyy__HH-mm-ss"));
+				long daysDifference = ChronoUnit.DAYS.between(folderDateTime.toLocalDate(), today.toLocalDate());
+				if (daysDifference > 14) {
+					deleteFolder(backupFolder);
+					System.out.println("Deleted backup folder: " + backupFolder.getName());
+				}
+			}
+		}
+	}
+
+	private void deleteFolder(File folder) {
+		File[] files = folder.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				if (file.isDirectory()) {
+					deleteFolder(file);
+				} else {
+					file.delete();
+				}
+			}
+		}
+		folder.delete();
 	}
 
 }
