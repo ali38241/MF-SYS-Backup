@@ -86,6 +86,8 @@ public class CleanService {
 	}
 
 
+//	------------------------------- Delete specific Row------------------------------------
+	
 	@Transactional
 	public void deleteSpecialRow(String databaseName, String organizationCode) {
 		entityManager.createNativeQuery("USE " + databaseName).executeUpdate();
@@ -128,6 +130,7 @@ public class CleanService {
 	}
 	
 	
+//	-----------------------------Delete Rest of the Rows------------------
 	
 	@Transactional
 	public void deleteRestOfRow(String databaseName, String organizationCode) {
